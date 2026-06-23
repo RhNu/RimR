@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { useTagCommands } from '@/features/tags/useTagCommands';
+import { useAutoMissingModsPrompt } from '@/features/order/hooks/useAutoMissingModsPrompt';
 import type { useOrderData } from '@/features/order/hooks/useOrderData';
 import { useOrderDerivedData } from '@/features/order/hooks/useOrderDerivedData';
 import { useOrderDraft } from '@/features/order/hooks/useOrderDraft';
@@ -77,6 +78,13 @@ function RegisterOrderEditHandler({ handler }: { handler: (value: string) => voi
 function useOrderWorkspaceValue(data: OrderData): OrderWorkspaceValue {
   const core = useOrderWorkspaceCore(data);
   const aux = useOrderWorkspaceAux(data, core);
+  const dialog = useOrderDialogStore((state) => state.dialog);
+  useAutoMissingModsPrompt({
+    draft: core.draftState.draft,
+    mods: core.derived.mods,
+    dialog,
+    setDialog: core.setDialog,
+  });
   const { commandsBase: _commandsBase, ...corePublic } = core;
   void _commandsBase;
   return { ...corePublic, ...aux };

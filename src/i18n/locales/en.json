@@ -1,0 +1,436 @@
+{
+  "menu": {
+    "file": "File",
+    "modList": "Mod List",
+    "view": "View",
+    "settings": "Settings",
+    "help": "Help",
+    "preferences": "Preferences...",
+    "aboutRimr": "About RimR",
+    "theme": "Theme",
+    "language": "Language",
+    "newModList": "New Mod List...",
+    "renameModList": "Rename Mod List...",
+    "saveAsModList": "Save Mod List As...",
+    "deleteModList": "Delete Mod List..."
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "en": "English",
+    "zh-CN": "简体中文"
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "close": "Close"
+  },
+  "file": {
+    "exportModList": "Export Mod List...",
+    "exportLibrarySettings": "Export Library Settings...",
+    "importModList": "Import Mod List...",
+    "importLibrarySettings": "Import Library Settings...",
+    "importFromSave": "Import from Save...",
+    "openDirectory": {
+      "title": "Open...",
+      "groupGame": "Game",
+      "groupRimr": "RimR",
+      "gameDir": "Game Directory",
+      "gameDataDir": "Game Data Directory",
+      "localModsDir": "Local Mods Directory",
+      "workshopModsDir": "Workshop Mods Directory",
+      "rimrDataDir": "RimR Data Directory",
+      "rimrModListsDir": "RimR Mod Lists Directory",
+      "rimrLogsDir": "RimR Logs Directory"
+    }
+  },
+  "dialog": {
+    "exportModList": "Export RimR mod list",
+    "exportLibrarySettings": "Export RimR library settings",
+    "importModList": "Import RimR mod list",
+    "importLibrarySettings": "Import RimR library settings",
+    "importFromSave": "Import from Save",
+    "selectField": "Select {{label}}"
+  },
+  "toast": {
+    "modListExported": "Mod list exported",
+    "librarySettingsExported": "Library settings exported",
+    "modListImported": "Mod list imported: {{name}}",
+    "librarySettingsImported": "Library settings imported",
+    "settingsSaved": "Settings saved",
+    "preferencesSynced": "Preferences synced",
+    "preferencesSyncFailed": "Failed to sync preferences",
+    "cacheCleared": "Session cache cleared",
+    "modListSaved": "Mod list saved",
+    "modListSavedAs": "Saved as: {{name}}",
+    "appliedToGame": "Applied to ModsConfig.xml",
+    "syncedFromGame": "Synced from game order",
+    "syncedFromSave": "Order imported from save",
+    "gameOrderAlreadySynced": "Already matches game order",
+    "saveOrderAlreadySynced": "Save order matches current draft",
+    "saveOrderEmpty": "No mods found in save file",
+    "catalogRescanned": "Catalog rebuilt",
+    "inactiveMissingModsRemoved": "Removed {{count}} missing inactive mod(s) from the draft",
+    "activeMissingModsRemoved": "Removed {{count}} missing active mod(s) from the draft",
+    "aliasSaved": "Alias saved",
+    "tagCreated": "Tag created",
+    "tagRenamed": "Tag renamed",
+    "tagDeleted": "Tag deleted",
+    "about": "RimR {{version}}"
+  },
+  "common": {
+    "retry": "Retry",
+    "save": "Save",
+    "reset": "Reset",
+    "browse": "Browse",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "notSet": "Not set",
+    "openSettings": "Open Settings",
+    "loadingRimr": "Loading RimR...",
+    "clear": "Clear {{label}}"
+  },
+  "severity": {
+    "error": "error",
+    "warning": "warning",
+    "info": "info"
+  },
+  "diagnostics": {
+    "xmlMalformed": "About.xml could not be parsed: {{error}}",
+    "packageIdMissing": "About.xml is missing packageId.",
+    "packageIdDuplicate": "Duplicate package ID {{packageId}}: {{paths}}",
+    "sourceReadFailed": "About.xml could not be read for {{sourceKey}}.",
+    "dependencyMissing": "{{packageId}} is missing dependency {{dependencyPackageId}}.",
+    "configModMissing": "ModsConfig.xml references {{packageId}}, but it is not installed.",
+    "activeModMissing": "{{packageId}} is active but is not installed.",
+    "dependencyInactive": "{{packageId}} depends on {{dependencyPackageId}}, but it is not active.",
+    "orderViolationLoadAfter": "{{targetPackageId}} must load before {{packageId}} ({{rule}}).",
+    "orderViolationLoadBefore": "{{targetPackageId}} must load before {{packageId}} ({{rule}}).",
+    "incompatibleActive": "{{packageId}} and {{incompatiblePackageId}} are incompatible but both active.",
+    "circularDependency": "Circular dependency: {{cycle}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "",
+    "configTitle": "Paths",
+    "configDesc": "",
+    "configVersion": "",
+    "loadingConfig": "Loading config…",
+    "autodetect": "Autodetect",
+    "saveConfig": "Save config",
+    "sessionTitle": "Session",
+    "sessionDesc": "",
+    "clearCacheDesc": "",
+    "clearCache": "Clear cache",
+    "paths": {
+      "gameDir": "Game directory",
+      "gameDataDir": "Game data directory",
+      "localModsDir": "Local mods",
+      "workshopModsDir": "Workshop mods",
+      "rimrDataDir": "RimR data directory"
+    }
+  },
+  "order": {
+    "title": "Order",
+    "activeCount": "",
+    "newModListDefault": "New mod list",
+    "copySuffix": "Copy",
+    "separatorDefault": "Separator",
+    "groupDefault": "Group",
+    "modListUnsaved": "Mod list unsaved",
+    "notApplied": "Not applied",
+    "reload": "Reload",
+    "resetToSaved": "Reset",
+    "discardDraft": "Discard changes",
+    "rescanCatalog": "Rebuild mod catalog",
+    "removeMissingMods": "Remove missing mods",
+    "refresh": "Refresh",
+    "saveModList": "Save",
+    "apply": "Apply",
+    "launchGame": "Launch",
+    "syncFromGame": "Sync from game order",
+    "syncFromSave": "Sync from Save",
+    "ungroup": "Ungroup",
+    "missing": "missing",
+    "modsCount": "{{count}} mods",
+    "modType": {
+      "csharp": "Contains C# assemblies",
+      "xml": "XML-only mod",
+      "expansion": "Core / DLC"
+    },
+    "asc": "Asc",
+    "desc": "Desc",
+    "unintroducedTitle": "Inactive",
+    "activeModListTitle": "Active",
+    "searchInactive": "Search inactive",
+    "searchActive": "Search active",
+    "sort": {
+      "name": "Name",
+      "packageId": "Package ID",
+      "author": "Author",
+      "source": "Source",
+      "modifiedAt": "Modified"
+    },
+    "state": {
+      "loadingActive": "Loading game active list...",
+      "loadFailed": "Failed to load ModsConfig.xml.",
+      "noCatalog": "No catalog loaded.",
+      "loadingModList": "Loading RimR mod list...",
+      "modListNotLoaded": "Mod list library is not loaded.",
+      "loadModList": "Load Mod List"
+    },
+    "inspector": {
+      "title": "Details",
+      "description": "",
+      "packageId": "Package ID",
+      "sourceKey": "Source key",
+      "displayAlias": "Display Alias",
+      "saveAlias": "Save Alias",
+      "groupEntries": "Group entries",
+      "separatorId": "Separator ID",
+      "note": "Note"
+    },
+    "metadata": {
+      "empty": "Select an item to view details.",
+      "path": "Path",
+      "folderSize": "Folder size",
+      "modifiedAt": "Modified",
+      "loading": "Loading...",
+      "diagnostics": "Diagnostics"
+    },
+    "context": {
+      "addToActive": "Add to Active",
+      "removeFromActive": "Remove from Active",
+      "createGroup": "Create Group from Selection",
+      "editAlias": "Edit Display Alias",
+      "renameGroup": "Rename Group",
+      "removeGroup": "Remove Group",
+      "renameSeparator": "Rename Separator",
+      "deleteSeparator": "Delete Separator",
+      "addSeparatorAbove": "Add Separator Above",
+      "openModFolder": "Open Folder",
+      "openInSteam": "Open in Steam",
+      "openWorkshopPage": "Open in Browser",
+      "tags": "Tags",
+      "newTag": "New Tag…",
+      "renameTag": "Rename",
+      "setTagColor": "Set Color",
+      "deleteTag": "Delete Tag",
+      "noColor": "No Color",
+      "manageTag": "Manage",
+      "reorderTags": "Reorder Tags…"
+    },
+    "tag": {
+      "namePlaceholder": "Tag name",
+      "create": "Create",
+      "confirm": "Confirm",
+      "renamePlaceholder": "New name",
+      "all": "All tags",
+      "reorderTitle": "Reorder Tags",
+      "reorderDesc": "Drag to change the tag order. This determines the color bar segment order."
+    },
+    "dialog": {
+      "newModListTitle": "New Mod List",
+      "renameModListTitle": "Rename Mod List",
+      "saveAsModListTitle": "Save Mod List As",
+      "deleteModListTitle": "Delete Mod List",
+      "editAliasTitle": "Edit Display Alias",
+      "createGroupTitle": "Create Group",
+      "renameGroupTitle": "Rename Group",
+      "addSeparatorTitle": "Add Separator",
+      "renameSeparatorTitle": "Rename Separator",
+      "resetToSavedTitle": "Reset to Saved",
+      "activeMissingModsTitle": "Active mods are missing",
+      "syncFromGameTitle": "Sync from Game Order",
+      "syncFromSaveTitle": "Sync from Save Order",
+      "applyToGameTitle": "Apply to Game",
+      "discardDraftTitle": "Discard Changes",
+      "editDesc": "Enter the new value.",
+      "saveAsModListDesc": "Enter a name for the new mod list. All entries, groups, and separators will be copied.",
+      "deleteModListDesc": "Delete the current mod list. This cannot be undone.",
+      "resetToSavedDesc": "Discard unsaved draft changes and reload the last saved mod list.",
+      "activeMissingModsDesc": "These active mods are no longer installed. Remove them from the draft before saving or applying.",
+      "syncFromGameDesc": "Review changes before replacing the current draft order with ModsConfig.xml.",
+      "syncFromSaveDesc": "Review changes before replacing the current draft order with the save file's mod order.",
+      "applyToGameDesc": "Review changes before writing the current draft order to ModsConfig.xml.",
+      "discardDraftDesc": "Discard unsaved draft changes and revert to the last saved mod list."
+    },
+    "diff": {
+      "viewUnified": "Unified",
+      "viewByChange": "By change",
+      "structuralEvents": "Structural changes",
+      "movedInline": "Move {{packageId}}: #{{from}} → #{{to}}",
+      "added": "Add {{packageId}} at #{{index}}",
+      "removed": "Remove {{packageId}} from #{{index}}",
+      "moved": "Move {{packageId}} from #{{from}} to #{{to}}",
+      "groupSplit": "Split group {{groupName}}: {{packageIds}}",
+      "separatorMoved": "Re-anchor separator {{title}}",
+      "missingSkipped": "Skip missing mod {{label}} ({{packageId}})",
+      "noChange": "No load-order changes.",
+      "hiddenLines": "{{count}} unchanged rows hidden"
+    },
+    "syncSummary": {
+      "unsaved": "Unsaved draft changes will be overwritten.",
+      "orderChanged": "Active mod order will change.",
+      "added": "{{count}} game-only mods will be added: {{ids}}",
+      "removed": "{{count}} draft-only mods will be removed: {{ids}}",
+      "splitGroups": "{{count}} groups will be split: {{names}}",
+      "movedSeparators": "{{count}} separators will be re-anchored: {{names}}",
+      "noStructuralChanges": "Only order will be updated."
+    },
+    "validation": {
+      "checking": "Checking",
+      "clean": "Clean",
+      "errors": "{{count}} errors",
+      "warnings": "{{count}} warnings",
+      "infos": "{{count}} infos",
+      "summaryTitle": "Validation Summary"
+    },
+    "aria": {
+      "separatorTitle": "Separator title",
+      "sortAvailable": "Sort available mods",
+      "sortDirection": "Sort direction",
+      "tagFilter": "Filter by tag",
+      "selectForGrouping": "Select {{name}} for grouping",
+      "addMod": "Add {{name}}",
+      "removeEntry": "Remove {{id}}"
+    }
+  },
+  "catalog": {
+    "title": "Catalog",
+    "subtitle": "",
+    "loading": "Loading catalog…",
+    "loadFailedTitle": "Failed to load catalog",
+    "loadFailedDesc": "",
+    "noCatalogTitle": "No catalog loaded",
+    "noCatalogDesc": "",
+    "modsCount": "{{count}} mods",
+    "duplicateIds": "{{count}} duplicate IDs",
+    "refreshing": "refreshing",
+    "searchPlaceholder": "Search mods...",
+    "noMatch": "No matches.",
+    "filter": {
+      "all": "All",
+      "expansion": "Expansion",
+      "local": "Local",
+      "workshop": "Workshop"
+    }
+  },
+  "setup": {
+    "title": "Setup",
+    "subtitle": "",
+    "pathsTitle": "Paths",
+    "pathsDesc": "",
+    "scanTitle": "Scan",
+    "scanDesc": "",
+    "scan": "Scan",
+    "scanHint": "Set game and config paths first.",
+    "saveConfig": "Save",
+    "scanned": "{{count}} mods scanned",
+    "duplicates": "{{count}} duplicates",
+    "errors": "{{count}} errors",
+    "warnings": "{{count}} warnings",
+    "info": "{{count}} info",
+    "noDiagnostics": "No diagnostics",
+    "noScanYet": "Press Scan to read mod metadata.",
+    "loadingConfig": "Loading config…"
+  },
+  "logs": {
+    "title": "Logs",
+    "tab": {
+      "steam": "Workshop",
+      "rimworld": "RimWorld"
+    },
+    "steam": {
+      "searchPlaceholder": "Search by name, ID, or package ID...",
+      "refresh": "Refresh",
+      "notLoaded": "Click refresh to load Steam Workshop data.",
+      "notFound": "Steam Workshop ACF file not found.",
+      "noEntries": "No workshop items installed.",
+      "noMatch": "No matching entries.",
+      "loadError": "Failed to load Steam Workshop data.",
+      "unknownMod": "Unknown mod",
+      "columnMod": "Mod",
+      "columnPackageId": "Package ID",
+      "columnFileId": "Workshop ID",
+      "columnUpdated": "Updated",
+      "columnTouched": "Accessed"
+    },
+    "rimworld": {
+      "playerLog": "Player.log",
+      "playerPrevLog": "Player-prev.log",
+      "refresh": "Refresh",
+      "live": "Live",
+      "searchPlaceholder": "Search log...",
+      "notLoaded": "Select a log file to load.",
+      "empty": "Log file is empty.",
+      "noMatch": "No matching entries.",
+      "loadError": "Failed to load log file.",
+      "refJump": "Jump to Ref {{refId}}",
+      "level": {
+        "all": "All",
+        "exception": "Exceptions",
+        "error": "Errors",
+        "warning": "Warnings",
+        "info": "Info"
+      },
+      "stats": {
+        "total": "{{count}} lines",
+        "errors": "{{count}} errors",
+        "warnings": "{{count}} warnings",
+        "exceptions": "{{count}} exceptions"
+      }
+    }
+  },
+  "modDetails": {
+    "source": {
+      "expansion": "Expansion",
+      "local": "Local",
+      "workshop": "Workshop"
+    },
+    "sections": {
+      "identity": "Identity",
+      "authors": "Authors",
+      "supportedVersions": "Supported versions",
+      "description": "Description",
+      "rules": "Rules",
+      "status": "Status",
+      "fileInfo": "File info"
+    },
+    "fields": {
+      "name": "Name",
+      "packageId": "Package ID",
+      "sourceKey": "Source key",
+      "modVersion": "Mod version",
+      "steamAppId": "Steam app ID",
+      "url": "URL"
+    },
+    "rules": {
+      "loadAfter": "Load after",
+      "loadBefore": "Load before",
+      "forceLoadAfter": "Force load after",
+      "forceLoadBefore": "Force load before",
+      "incompatibleWith": "Incompatible with",
+      "dependencies": "Dependencies"
+    },
+    "links": {
+      "steam": "Steam",
+      "download": "Download"
+    },
+    "alt": "alt: {{ids}}",
+    "status": {
+      "malformed": "Metadata is malformed; some fields may be missing or unreadable.",
+      "issues": "This mod reported validation issues."
+    },
+    "badges": {
+      "valid": "valid",
+      "issues": "issues"
+    }
+  },
+  "error": {
+    "transport": "transport error"
+  }
+}

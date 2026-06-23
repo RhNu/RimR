@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RimR</title>
+    <style>
+      .rimr-loader-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: hsl(0 0% 45%);
+      }
+      .rimr-loader {
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: rimr-spin 0.8s linear infinite;
+      }
+      @keyframes rimr-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root">
+      <div class="rimr-loader-screen">
+        <div class="rimr-loader" role="status" aria-label="Loading"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

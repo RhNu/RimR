@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release Windows Portable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup toolchain
+        uses: ./.github/actions/setup-toolchain
+        with:
+          cache-shared-key: release
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify version matches tag
+        shell: pwsh
+        run: |
+          $pkgVer = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tagVer = "${{ github.ref_name }}" -replace "^v", ""
+          if ($pkgVer -ne $tagVer) {
+            throw "package.json version ($pkgVer) does not match tag version ($tagVer)"
+          }
+          Write-Host "Version OK: $pkgVer"
+
+      - name: Build portable binary
+        run: pnpm tauri build --no-bundle
+
+      - name: Stage portable artifact
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".Substring(1)
+          $staging = "RimR-$version-windows-x86_64-portable"
+          $stageDir = "dist-release/$staging"
+          New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
+          Copy-Item "target/release/RimR.exe" $stageDir
+          Copy-Item "LICENSE" $stageDir
+          $zip = "dist-release/$staging.zip"
+          Compress-Archive -Path "$stageDir/*" -DestinationPath $zip -Force
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash
+          Set-Content -Path "$zip.sha256" -Value "$hash  $staging.zip"
+          Write-Host "Created $zip"
+          Write-Host "SHA256: $hash"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: RimR ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            dist-release/*.zip
+            dist-release/*.sha256
+          fail_on_unmatched_files: true

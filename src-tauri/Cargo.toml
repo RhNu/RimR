@@ -1,0 +1,47 @@
+[package]
+name = "rimr-tauri"
+version.workspace = true
+description.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[package.metadata.tauri-winres]
+OriginalFilename = "RimR.exe"
+InternalName = "RimR"
+Comments = "A RimWorld mod manager."
+
+[lib]
+name = "rimr_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.22"
+directories = "6"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+regex = "1"
+rimr-bindings = { path = "../crates/rimr-bindings" }
+rimr-core = { path = "../crates/rimr-core" }
+rimr-steam = { path = "../crates/rimr-steam" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+steamlocate = "2.1"
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-opener = "2"
+tracing = { version = "0.1", features = ["log"] }
+log = "0.4"
+tauri-plugin-dialog = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["fs", "io-util", "macros", "rt-multi-thread", "sync"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
+tauri-plugin-window-state = "2"

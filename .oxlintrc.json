@@ -1,0 +1,114 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "vitest"],
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "ignorePatterns": ["dist", "dist-ssr", "target", "src-tauri/target", "src/commands/generated"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/jsx-key": "error",
+    "react/jsx-no-undef": "error",
+    "react/jsx-no-useless-fragment": "error",
+    "react/self-closing-comp": "error",
+    "react/no-unstable-nested-components": "error",
+    "vitest/no-focused-tests": "error",
+    "vitest/no-disabled-tests": "error",
+    "vitest/valid-expect": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "zustand",
+            "message": "zustand stores must live in src/stores/. See docs/state-management.md."
+          }
+        ]
+      }
+    ],
+    "max-lines": [
+      "error",
+      {
+        "max": 300,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "max-lines-per-function": [
+      "error",
+      {
+        "max": 80,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/features/*/model/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react",
+                "message": "model/ must stay pure: do not import React or state libraries here. See docs/state-management.md."
+              },
+              {
+                "name": "react-dom",
+                "message": "model/ must stay pure: do not import React or state libraries here. See docs/state-management.md."
+              },
+              {
+                "name": "zustand",
+                "message": "model/ must stay pure: do not import React or state libraries here. See docs/state-management.md."
+              },
+              {
+                "name": "@tanstack/react-query",
+                "message": "model/ must stay pure: do not import React or state libraries here. See docs/state-management.md."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/stores/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "max-lines": [
+          "error",
+          {
+            "max": 350,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ],
+        "max-lines-per-function": [
+          "error",
+          {
+            "max": 120,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["vite.config.ts", "vitest.config.ts"],
+      "env": {
+        "node": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,436 @@
+{
+  "menu": {
+    "file": "文件",
+    "modList": "模组列表",
+    "view": "视图",
+    "settings": "设置",
+    "help": "帮助",
+    "preferences": "首选项...",
+    "aboutRimr": "关于 RimR",
+    "theme": "主题",
+    "language": "语言",
+    "newModList": "新建模组列表...",
+    "renameModList": "重命名模组列表...",
+    "saveAsModList": "另存为模组列表...",
+    "deleteModList": "删除模组列表..."
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "language": {
+    "en": "English",
+    "zh-CN": "简体中文"
+  },
+  "window": {
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "close": "关闭"
+  },
+  "file": {
+    "exportModList": "导出模组列表...",
+    "exportLibrarySettings": "导出库设置...",
+    "importModList": "导入模组列表...",
+    "importLibrarySettings": "导入库设置...",
+    "importFromSave": "从存档导入排序...",
+    "openDirectory": {
+      "title": "打开...",
+      "groupGame": "游戏",
+      "groupRimr": "RimR",
+      "gameDir": "游戏目录",
+      "gameDataDir": "游戏数据目录",
+      "localModsDir": "本地模组目录",
+      "workshopModsDir": "创意工坊模组目录",
+      "rimrDataDir": "RimR 数据目录",
+      "rimrModListsDir": "RimR 模组列表目录",
+      "rimrLogsDir": "RimR 日志目录"
+    }
+  },
+  "dialog": {
+    "exportModList": "导出 RimR 模组列表",
+    "exportLibrarySettings": "导出 RimR 库设置",
+    "importModList": "导入 RimR 模组列表",
+    "importLibrarySettings": "导入 RimR 库设置",
+    "importFromSave": "从存档导入",
+    "selectField": "选择{{label}}"
+  },
+  "toast": {
+    "modListExported": "模组列表已导出",
+    "librarySettingsExported": "库设置已导出",
+    "modListImported": "模组列表已导入：{{name}}",
+    "librarySettingsImported": "库设置已导入",
+    "settingsSaved": "设置已保存",
+    "preferencesSynced": "偏好已同步",
+    "preferencesSyncFailed": "同步偏好失败",
+    "cacheCleared": "会话缓存已清除",
+    "modListSaved": "模组列表已保存",
+    "modListSavedAs": "已另存为：{{name}}",
+    "appliedToGame": "已应用到 ModsConfig.xml",
+    "syncedFromGame": "已从游戏排序同步",
+    "syncedFromSave": "已从存档导入排序",
+    "gameOrderAlreadySynced": "已与游戏排序一致",
+    "saveOrderAlreadySynced": "存档排序与当前草稿一致",
+    "saveOrderEmpty": "存档中未找到模组",
+    "catalogRescanned": "目录已重建",
+    "inactiveMissingModsRemoved": "已从草稿的未启用区域移除 {{count}} 个缺失 Mod",
+    "activeMissingModsRemoved": "已从草稿的已启用区域移除 {{count}} 个缺失 Mod",
+    "aliasSaved": "别名已保存",
+    "tagCreated": "标签已创建",
+    "tagRenamed": "标签已重命名",
+    "tagDeleted": "标签已删除",
+    "about": "RimR {{version}}"
+  },
+  "common": {
+    "retry": "重试",
+    "save": "保存",
+    "reset": "重置",
+    "browse": "浏览",
+    "delete": "删除",
+    "cancel": "取消",
+    "notSet": "未设置",
+    "openSettings": "打开设置",
+    "loadingRimr": "正在加载 RimR...",
+    "clear": "清除{{label}}"
+  },
+  "severity": {
+    "error": "错误",
+    "warning": "警告",
+    "info": "信息"
+  },
+  "diagnostics": {
+    "xmlMalformed": "无法解析 About.xml：{{error}}",
+    "packageIdMissing": "About.xml 缺少 packageId。",
+    "packageIdDuplicate": "重复的 package ID {{packageId}}：{{paths}}",
+    "sourceReadFailed": "无法读取 {{sourceKey}} 的 About.xml。",
+    "dependencyMissing": "{{packageId}} 缺少依赖 {{dependencyPackageId}}。",
+    "configModMissing": "ModsConfig.xml 引用了 {{packageId}}，但该 mod 未安装。",
+    "activeModMissing": "{{packageId}} 已启用，但该 mod 未安装。",
+    "dependencyInactive": "{{packageId}} 依赖 {{dependencyPackageId}}，但该依赖未启用。",
+    "orderViolationLoadAfter": "{{targetPackageId}} 必须在 {{packageId}} 之前加载（{{rule}}）。",
+    "orderViolationLoadBefore": "{{targetPackageId}} 必须在 {{packageId}} 之前加载（{{rule}}）。",
+    "incompatibleActive": "{{packageId}} 与 {{incompatiblePackageId}} 不兼容，但两者都已启用。",
+    "circularDependency": "循环依赖：{{cycle}}"
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "",
+    "configTitle": "路径",
+    "configDesc": "",
+    "configVersion": "",
+    "loadingConfig": "正在加载配置…",
+    "autodetect": "自动检测",
+    "saveConfig": "保存配置",
+    "sessionTitle": "会话",
+    "sessionDesc": "",
+    "clearCacheDesc": "",
+    "clearCache": "清除缓存",
+    "paths": {
+      "gameDir": "游戏目录",
+      "gameDataDir": "游戏数据目录",
+      "localModsDir": "本地 mod",
+      "workshopModsDir": "创意工坊 mod",
+      "rimrDataDir": "RimR 数据目录"
+    }
+  },
+  "order": {
+    "title": "排序",
+    "activeCount": "",
+    "newModListDefault": "新模组列表",
+    "copySuffix": "副本",
+    "separatorDefault": "分隔符",
+    "groupDefault": "分组",
+    "modListUnsaved": "模组列表未保存",
+    "notApplied": "未应用",
+    "reload": "重新加载",
+    "resetToSaved": "重置",
+    "discardDraft": "弃置改动",
+    "rescanCatalog": "重建模组目录",
+    "removeMissingMods": "移除缺失 Mod",
+    "refresh": "刷新",
+    "saveModList": "保存",
+    "apply": "应用",
+    "launchGame": "启动",
+    "syncFromGame": "从游戏排序同步",
+    "syncFromSave": "从存档同步",
+    "ungroup": "取消分组",
+    "missing": "缺失",
+    "modsCount": "{{count}} 个 mod",
+    "modType": {
+      "csharp": "包含 C# 程序集",
+      "xml": "纯 XML 模组",
+      "expansion": "本体 / DLC"
+    },
+    "asc": "升序",
+    "desc": "降序",
+    "unintroducedTitle": "未启用",
+    "activeModListTitle": "已启用",
+    "searchInactive": "搜索未启用",
+    "searchActive": "搜索已启用",
+    "sort": {
+      "name": "名称",
+      "packageId": "Package ID",
+      "author": "作者",
+      "source": "来源",
+      "modifiedAt": "修改时间"
+    },
+    "state": {
+      "loadingActive": "正在加载游戏活动列表...",
+      "loadFailed": "加载 ModsConfig.xml 失败。",
+      "noCatalog": "未加载目录。",
+      "loadingModList": "正在加载 RimR 模组列表...",
+      "modListNotLoaded": "模组列表库未加载。",
+      "loadModList": "加载模组列表"
+    },
+    "inspector": {
+      "title": "详情",
+      "description": "",
+      "packageId": "Package ID",
+      "sourceKey": "来源键",
+      "displayAlias": "显示别名",
+      "saveAlias": "保存别名",
+      "groupEntries": "分组条目",
+      "separatorId": "分隔符 ID",
+      "note": "备注"
+    },
+    "metadata": {
+      "empty": "选择项目以查看详情。",
+      "path": "路径",
+      "folderSize": "文件夹大小",
+      "modifiedAt": "修改时间",
+      "loading": "加载中...",
+      "diagnostics": "诊断"
+    },
+    "context": {
+      "addToActive": "加入启用列表",
+      "removeFromActive": "从启用列表移除",
+      "createGroup": "从选择项创建分组",
+      "editAlias": "编辑显示别名",
+      "renameGroup": "重命名分组",
+      "removeGroup": "移除分组",
+      "renameSeparator": "重命名分隔符",
+      "deleteSeparator": "删除分隔符",
+      "addSeparatorAbove": "在其上添加分隔符",
+      "openModFolder": "打开文件夹",
+      "openInSteam": "在 Steam 打开",
+      "openWorkshopPage": "在浏览器打开",
+      "tags": "标签",
+      "newTag": "新建标签…",
+      "renameTag": "重命名",
+      "setTagColor": "设置颜色",
+      "deleteTag": "删除标签",
+      "noColor": "无色",
+      "manageTag": "管理",
+      "reorderTags": "调整标签顺序…"
+    },
+    "tag": {
+      "namePlaceholder": "标签名称",
+      "create": "创建",
+      "confirm": "确认",
+      "renamePlaceholder": "新名称",
+      "all": "全部标签",
+      "reorderTitle": "调整标签顺序",
+      "reorderDesc": "拖动以调整标签顺序，这决定色条的分段顺序。"
+    },
+    "dialog": {
+      "newModListTitle": "新建模组列表",
+      "renameModListTitle": "重命名模组列表",
+      "saveAsModListTitle": "另存为模组列表",
+      "deleteModListTitle": "删除模组列表",
+      "editAliasTitle": "编辑显示别名",
+      "createGroupTitle": "创建分组",
+      "renameGroupTitle": "重命名分组",
+      "addSeparatorTitle": "添加分隔符",
+      "renameSeparatorTitle": "重命名分隔符",
+      "resetToSavedTitle": "重置到已保存",
+      "activeMissingModsTitle": "已启用 Mod 缺失",
+      "syncFromGameTitle": "从游戏排序同步",
+      "syncFromSaveTitle": "从存档排序同步",
+      "applyToGameTitle": "应用到游戏",
+      "discardDraftTitle": "弃置改动",
+      "editDesc": "输入新的值。",
+      "saveAsModListDesc": "输入新模组列表的名称。当前列表的所有条目、分组和分隔符都会被复制。",
+      "deleteModListDesc": "删除当前模组列表。此操作无法撤销。",
+      "resetToSavedDesc": "丢弃未保存的草稿改动，并重新加载最后一次保存的模组列表。",
+      "activeMissingModsDesc": "以下已启用 Mod 已不在当前目录中。保存或应用前，请先从草稿中移除它们。",
+      "syncFromGameDesc": "替换当前草稿排序前先确认变化。",
+      "syncFromSaveDesc": "将用存档中的模组顺序替换当前草稿排序，请先确认变化。",
+      "applyToGameDesc": "写入当前草稿排序到 ModsConfig.xml 前先确认变化。",
+      "discardDraftDesc": "丢弃未保存的草稿改动，并恢复到上一次保存的模组列表。"
+    },
+    "diff": {
+      "viewUnified": "统一对比",
+      "viewByChange": "按条目",
+      "structuralEvents": "结构变化",
+      "movedInline": "移动 {{packageId}}：#{{from}} → #{{to}}",
+      "added": "在 #{{index}} 添加 {{packageId}}",
+      "removed": "从 #{{index}} 移除 {{packageId}}",
+      "moved": "移动 {{packageId}}：#{{from}} → #{{to}}",
+      "groupSplit": "拆分分组 {{groupName}}：{{packageIds}}",
+      "separatorMoved": "重新锚定分隔符 {{title}}",
+      "missingSkipped": "跳过缺失 Mod {{label}}（{{packageId}}）",
+      "noChange": "没有加载顺序变化。",
+      "hiddenLines": "已折叠 {{count}} 行未变更"
+    },
+    "syncSummary": {
+      "unsaved": "未保存的草稿改动将被覆盖。",
+      "orderChanged": "已启用 mod 排序将改变。",
+      "added": "将加入 {{count}} 个仅存在于游戏配置中的 mod：{{ids}}",
+      "removed": "将移除 {{count}} 个仅存在于草稿中的 mod：{{ids}}",
+      "splitGroups": "将拆散 {{count}} 个分组：{{names}}",
+      "movedSeparators": "将重新锚定 {{count}} 个分隔符：{{names}}",
+      "noStructuralChanges": "只会更新排序。"
+    },
+    "validation": {
+      "checking": "检查中",
+      "clean": "无问题",
+      "errors": "{{count}} 个错误",
+      "warnings": "{{count}} 个警告",
+      "infos": "{{count}} 条信息",
+      "summaryTitle": "验证汇总"
+    },
+    "aria": {
+      "separatorTitle": "分隔符标题",
+      "sortAvailable": "排序可用 mod",
+      "sortDirection": "排序方向",
+      "tagFilter": "按标签筛选",
+      "selectForGrouping": "选择 {{name}} 进行分组",
+      "addMod": "添加 {{name}}",
+      "removeEntry": "移除 {{id}}"
+    }
+  },
+  "catalog": {
+    "title": "目录",
+    "subtitle": "",
+    "loading": "正在加载目录…",
+    "loadFailedTitle": "加载目录失败",
+    "loadFailedDesc": "",
+    "noCatalogTitle": "未加载目录",
+    "noCatalogDesc": "",
+    "modsCount": "{{count}} 个 mod",
+    "duplicateIds": "{{count}} 个重复 ID",
+    "refreshing": "刷新中",
+    "searchPlaceholder": "搜索 mod...",
+    "noMatch": "无匹配项。",
+    "filter": {
+      "all": "全部",
+      "expansion": "扩展包",
+      "local": "本地",
+      "workshop": "创意工坊"
+    }
+  },
+  "setup": {
+    "title": "设置",
+    "subtitle": "",
+    "pathsTitle": "路径",
+    "pathsDesc": "",
+    "scanTitle": "扫描",
+    "scanDesc": "",
+    "scan": "扫描",
+    "scanHint": "请先设置游戏和配置路径。",
+    "saveConfig": "保存",
+    "scanned": "已扫描 {{count}} 个 mod",
+    "duplicates": "{{count}} 个重复",
+    "errors": "{{count}} 个错误",
+    "warnings": "{{count}} 个警告",
+    "info": "{{count}} 条信息",
+    "noDiagnostics": "无诊断信息",
+    "noScanYet": "点击扫描以读取 mod 元数据。",
+    "loadingConfig": "正在加载配置…"
+  },
+  "logs": {
+    "title": "日志",
+    "tab": {
+      "steam": "创意工坊",
+      "rimworld": "RimWorld"
+    },
+    "steam": {
+      "searchPlaceholder": "按名称、ID或包ID搜索...",
+      "refresh": "刷新",
+      "notLoaded": "点击刷新加载 Steam 工坊数据。",
+      "notFound": "未找到 Steam 工坊 ACF 文件。",
+      "noEntries": "没有已安装的工坊项目。",
+      "noMatch": "没有匹配的条目。",
+      "loadError": "加载 Steam 工坊数据失败。",
+      "unknownMod": "未知模组",
+      "columnMod": "模组",
+      "columnPackageId": "包 ID",
+      "columnFileId": "工坊 ID",
+      "columnUpdated": "更新时间",
+      "columnTouched": "访问时间"
+    },
+    "rimworld": {
+      "playerLog": "Player.log",
+      "playerPrevLog": "Player-prev.log",
+      "refresh": "刷新",
+      "live": "实时",
+      "searchPlaceholder": "搜索日志...",
+      "notLoaded": "选择日志文件加载。",
+      "empty": "日志文件为空。",
+      "noMatch": "没有匹配的条目。",
+      "loadError": "加载日志文件失败。",
+      "refJump": "跳转到 Ref {{refId}}",
+      "level": {
+        "all": "全部",
+        "exception": "异常",
+        "error": "错误",
+        "warning": "警告",
+        "info": "信息"
+      },
+      "stats": {
+        "total": "{{count}} 行",
+        "errors": "{{count}} 错误",
+        "warnings": "{{count}} 警告",
+        "exceptions": "{{count}} 异常"
+      }
+    }
+  },
+  "modDetails": {
+    "source": {
+      "expansion": "扩展包",
+      "local": "本地",
+      "workshop": "创意工坊"
+    },
+    "sections": {
+      "identity": "标识",
+      "authors": "作者",
+      "supportedVersions": "支持版本",
+      "description": "描述",
+      "rules": "规则信息",
+      "status": "状态",
+      "fileInfo": "文件信息"
+    },
+    "fields": {
+      "name": "名称",
+      "packageId": "Package ID",
+      "sourceKey": "来源键",
+      "modVersion": "Mod 版本",
+      "steamAppId": "Steam App ID",
+      "url": "URL"
+    },
+    "rules": {
+      "loadAfter": "之后加载",
+      "loadBefore": "之前加载",
+      "forceLoadAfter": "强制之后加载",
+      "forceLoadBefore": "强制之前加载",
+      "incompatibleWith": "不兼容",
+      "dependencies": "依赖"
+    },
+    "links": {
+      "steam": "Steam",
+      "download": "下载"
+    },
+    "alt": "替代：{{ids}}",
+    "status": {
+      "malformed": "元数据格式错误；部分字段可能缺失或无法读取。",
+      "issues": "此 mod 存在验证问题。"
+    },
+    "badges": {
+      "valid": "有效",
+      "issues": "有问题"
+    }
+  },
+  "error": {
+    "transport": "传输错误"
+  }
+}

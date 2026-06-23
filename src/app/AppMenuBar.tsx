@@ -240,6 +240,7 @@ function DesktopMenu({
         <DropdownMenuContent
           align="start"
           sideOffset={0}
+          onCloseAutoFocus={(e) => e.preventDefault()}
           className="min-w-48 rounded-slight border border-border bg-popover p-1 text-popover-foreground shadow-lg"
         >
           {children}

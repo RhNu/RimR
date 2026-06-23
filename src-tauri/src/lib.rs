@@ -2,6 +2,7 @@ pub mod app_config;
 mod commands;
 pub mod dto;
 mod error;
+mod fs_utils;
 mod library_store;
 pub mod logging;
 mod mod_file_info;

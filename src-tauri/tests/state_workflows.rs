@@ -232,6 +232,105 @@ async fn load_mod_preview_tolerates_missing_preview() {
 }
 
 #[tokio::test]
+async fn load_mod_preview_ignores_case_of_preview_file_name() {
+    let (dir, state) = sample_state();
+    std::fs::remove_file(dir.path().join("RimWorld/Mods/LocalMod/About/Preview.png")).unwrap();
+    write_bytes(
+        &dir.path().join("RimWorld/Mods/LocalMod/About/preview.png"),
+        &[
+            137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1,
+            8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 15, 4,
+            0, 9, 251, 3, 253, 167, 45, 186, 44, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+        ],
+    );
+    let scan = state.rebuild_mod_catalog().await.unwrap();
+    let local = scan
+        .catalog
+        .mods
+        .iter()
+        .find(|metadata| metadata.package_id == "local.mod")
+        .expect("local mod should scan");
+
+    let preview = state
+        .load_mod_preview(LoadModPreviewRequest {
+            source_key: local.source_key.clone(),
+        })
+        .await
+        .unwrap();
+
+    assert!(
+        preview
+            .preview_data_url
+            .as_deref()
+            .is_some_and(|url| url.starts_with("data:image/png;base64,"))
+    );
+}
+
+#[tokio::test]
+async fn load_mod_preview_ignores_case_of_about_directory_name() {
+    let (dir, state) = sample_state();
+    let about_dir = dir.path().join("RimWorld/Mods/LocalMod/About");
+    let lower_about_dir = dir.path().join("RimWorld/Mods/LocalMod/about");
+    std::fs::rename(&about_dir, &lower_about_dir).unwrap();
+    let scan = state.rebuild_mod_catalog().await.unwrap();
+    let local = scan
+        .catalog
+        .mods
+        .iter()
+        .find(|metadata| metadata.package_id == "local.mod")
+        .expect("local mod should scan");
+
+    let preview = state
+        .load_mod_preview(LoadModPreviewRequest {
+            source_key: local.source_key.clone(),
+        })
+        .await
+        .unwrap();
+
+    assert!(
+        preview
+            .preview_data_url
+            .as_deref()
+            .is_some_and(|url| url.starts_with("data:image/png;base64,"))
+    );
+}
+
+#[tokio::test]
+async fn load_mod_preview_ignores_case_of_preview_extension() {
+    let (dir, state) = sample_state();
+    std::fs::remove_file(dir.path().join("RimWorld/Mods/LocalMod/About/Preview.png")).unwrap();
+    write_bytes(
+        &dir.path().join("RimWorld/Mods/LocalMod/About/Preview.PNG"),
+        &[
+            137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1,
+            8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 15, 4,
+            0, 9, 251, 3, 253, 167, 45, 186, 44, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+        ],
+    );
+    let scan = state.rebuild_mod_catalog().await.unwrap();
+    let local = scan
+        .catalog
+        .mods
+        .iter()
+        .find(|metadata| metadata.package_id == "local.mod")
+        .expect("local mod should scan");
+
+    let preview = state
+        .load_mod_preview(LoadModPreviewRequest {
+            source_key: local.source_key.clone(),
+        })
+        .await
+        .unwrap();
+
+    assert!(
+        preview
+            .preview_data_url
+            .as_deref()
+            .is_some_and(|url| url.starts_with("data:image/png;base64,"))
+    );
+}
+
+#[tokio::test]
 async fn load_mod_preview_downscales_large_previews_for_inspector_display() {
     let (dir, state) = sample_state();
     write_bytes(

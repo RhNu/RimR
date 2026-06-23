@@ -1,3 +1,4 @@
+use crate::fs_utils::resolve_path_case_insensitive;
 use async_trait::async_trait;
 use rimr_core::{
     ModFeatures, ModSource, ModSourceEntry, ModSourceKey, SourceError, SourceFile, SourceKind,
@@ -55,7 +56,11 @@ impl ModSource for FsModSource {
 
     async fn read_about_xml(&self, key: &ModSourceKey) -> Result<Option<SourceFile>, SourceError> {
         let mod_dir = PathBuf::from(key.as_str());
-        let about = mod_dir.join("About").join("About.xml");
+        let Some(about) = resolve_path_case_insensitive(&mod_dir, Path::new("About/About.xml"))
+        else {
+            tracing::debug!(path = ?mod_dir, "About.xml not found");
+            return Ok(None);
+        };
         tracing::debug!(path = ?about, "reading About.xml");
         match tokio::fs::read(&about).await {
             Ok(bytes) => Ok(Some(SourceFile::new(

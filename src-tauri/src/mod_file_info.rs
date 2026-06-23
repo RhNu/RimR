@@ -1,5 +1,6 @@
 use crate::dto::{ModFolderSizeDto, ModPreviewDto};
 use crate::error::{CommandError, CommandErrorCode, CommandResult};
+use crate::fs_utils::resolve_path_case_insensitive;
 use base64::Engine;
 use image::{DynamicImage, GenericImageView, ImageFormat, imageops::FilterType};
 use std::io::Cursor;
@@ -157,22 +158,31 @@ fn folder_size_best_effort(path: &Path) -> u64 {
 }
 
 fn find_preview_path(mod_path: &Path, mod_icon_path: Option<&str>) -> Option<PathBuf> {
-    find_case_insensitive_child(&mod_path.join("About"), "Preview.png")
+    resolve_path_case_insensitive(mod_path, Path::new("About/Preview.png"))
         .or_else(|| mod_icon_path.and_then(|path| find_mod_icon_path(mod_path, path)))
 }
 
+const ICON_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "webp"];
+
 fn find_mod_icon_path(mod_path: &Path, mod_icon_path: &str) -> Option<PathBuf> {
     let raw = PathBuf::from(mod_icon_path);
-    let base = if raw.is_absolute() {
-        raw
-    } else {
-        mod_path.join(raw)
-    };
-    if base.is_file() {
-        return Some(base);
+    if raw.is_absolute() {
+        return resolve_absolute_icon_path(&raw);
     }
-    for extension in ["png", "jpg", "jpeg", "webp"] {
-        let candidate = base.with_extension(extension);
+    if let Some(found) = resolve_path_case_insensitive(mod_path, &raw)
+        && found.is_file()
+    {
+        return Some(found);
+    }
+    resolve_icon_with_extension_fallback(mod_path, &raw)
+}
+
+fn resolve_absolute_icon_path(raw: &Path) -> Option<PathBuf> {
+    if raw.is_file() {
+        return Some(raw.to_path_buf());
+    }
+    for extension in ICON_EXTENSIONS {
+        let candidate = raw.with_extension(extension);
         if candidate.is_file() {
             return Some(candidate);
         }
@@ -180,12 +190,28 @@ fn find_mod_icon_path(mod_path: &Path, mod_icon_path: &str) -> Option<PathBuf> {
     None
 }
 
-fn find_case_insensitive_child(parent: &Path, wanted: &str) -> Option<PathBuf> {
-    let entries = std::fs::read_dir(parent).ok()?;
+fn resolve_icon_with_extension_fallback(mod_path: &Path, relative: &Path) -> Option<PathBuf> {
+    let parent_rel = relative.parent().unwrap_or_else(|| Path::new(""));
+    let parent = resolve_path_case_insensitive(mod_path, parent_rel)?;
+    let stem = relative.file_stem()?.to_str()?;
+    let entries = std::fs::read_dir(&parent).ok()?;
     for entry in entries.filter_map(Result::ok) {
-        let file_name = entry.file_name();
-        if file_name.to_string_lossy().eq_ignore_ascii_case(wanted) {
-            return Some(entry.path());
+        let path = entry.path();
+        let Some(entry_stem) = path.file_stem().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        if !entry_stem.eq_ignore_ascii_case(stem) {
+            continue;
+        }
+        let Some(extension) = path.extension().and_then(|e| e.to_str()) else {
+            continue;
+        };
+        if ICON_EXTENSIONS
+            .iter()
+            .any(|allowed| allowed.eq_ignore_ascii_case(extension))
+            && path.is_file()
+        {
+            return Some(path);
         }
     }
     None

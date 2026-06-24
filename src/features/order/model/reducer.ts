@@ -8,7 +8,6 @@ import {
 import {
   addMods,
   addModsToGroup,
-  allStructuredPackages,
   createGroup,
   createGroupFromMods,
   insertSeparator,
@@ -27,8 +26,16 @@ import type { ModListAction } from './types';
 export { classifyMissingEntries, removeMissingEntries } from './missingEntries';
 
 export function unintroducedMods(mods: ModMetadataDto[], modList: ModListDto): ModMetadataDto[] {
-  const introduced = new Set(allStructuredPackages(modList.entries));
+  const introduced = new Set(packagesUnavailableForInactiveCatalog(modList.entries));
   return mods.filter((mod) => !introduced.has(mod.packageId));
+}
+
+function packagesUnavailableForInactiveCatalog(entries: ModListDto['entries']): string[] {
+  return entries.flatMap((entry) => {
+    if (entry.kind === 'mod') return entry.active === false ? [] : [entry.identity.packageId];
+    if (entry.kind === 'group') return entry.entries.map((child) => child.identity.packageId);
+    return [];
+  });
 }
 
 export function modListReducer(modList: ModListDto, action: ModListAction): ModListDto {

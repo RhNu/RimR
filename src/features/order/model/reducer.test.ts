@@ -15,6 +15,29 @@ describe('order model reducer basics', () => {
     ]);
   });
 
+  it('treats inactive top-level mods as available for inactive sorting', () => {
+    const current = baseModList([
+      {
+        kind: 'mod',
+        id: 'entry-a',
+        active: false,
+        identity: { packageId: 'a.core' },
+      },
+      {
+        kind: 'group',
+        id: 'group-required',
+        name: 'Required',
+        collapsed: false,
+        entries: [{ id: 'child-b', active: false, identity: { packageId: 'b.dep' } }],
+      },
+    ]);
+
+    expect(unintroducedMods(catalogMods, current).map((mod) => mod.packageId)).toEqual([
+      'a.core',
+      'c.extra',
+    ]);
+  });
+
   it('adds catalog mods at the requested index and skips active duplicates', () => {
     const next = modListReducer(baseModList(), {
       type: 'addMods',

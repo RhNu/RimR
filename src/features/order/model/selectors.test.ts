@@ -162,6 +162,38 @@ describe('order model render selectors', () => {
   });
 });
 
+describe('order model inactive render sorting', () => {
+  it('renders installed top-level inactive entries in catalog sort order', () => {
+    const rows = buildInactiveRenderRows(
+      [
+        {
+          kind: 'mod',
+          id: 'entry-z',
+          active: false,
+          identity: { packageId: 'z.core' },
+        },
+      ],
+      [mod('a.core', 'Alpha'), mod('z.core', 'Zeta')],
+      {
+        query: '',
+        aliases: [],
+        modByPackageId: new Map([
+          ['a.core', mod('a.core', 'Alpha')],
+          ['z.core', mod('z.core', 'Zeta')],
+        ]),
+        modTags: [],
+        tagDefs: [],
+        tagFilter: '',
+      },
+    );
+
+    expect(rows.map((row) => row.id)).toEqual([
+      'inactive:catalog:a.core',
+      'inactive:catalog:z.core',
+    ]);
+  });
+});
+
 describe('order model tag filtering', () => {
   it('filters inactive mods by tag name in the search text', () => {
     const inactiveMods = [

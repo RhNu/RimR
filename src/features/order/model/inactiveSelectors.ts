@@ -62,6 +62,7 @@ type InactiveRenderContext = {
   tokens: string[];
   searchOptions: RenderSearchOptions;
   hasTag: (identity: ModIdentityDto) => boolean;
+  catalogPackageIds: Set<string>;
 };
 
 type TagSearchContext = {
@@ -112,7 +113,8 @@ export function buildInactiveRenderRows(
   options: InactiveRenderOptions,
 ): InactiveRenderRow[] {
   const ctx = inactiveRenderContext(options);
-  const structured = new Set(structuredPackageIds(entries));
+  ctx.catalogPackageIds = new Set(catalogMods.map((mod) => mod.packageId));
+  const structured = new Set(structuredPackageIds(entries, ctx.catalogPackageIds));
   const rows: InactiveRenderRow[] = [];
   for (const entry of entries) {
     rows.push(...inactiveEntryRenderRows(entry, ctx));
@@ -154,6 +156,7 @@ function inactiveRenderContext(options: InactiveRenderOptions): InactiveRenderCo
       tagNamesForIdentity,
     },
     hasTag,
+    catalogPackageIds: new Set(),
   };
 }
 
@@ -173,6 +176,7 @@ function inactiveModEntryRenderRows(
   ctx: InactiveRenderContext,
 ): InactiveRenderRow[] {
   const missing = !ctx.searchOptions.modByPackageId.has(entry.identity.packageId);
+  if (entry.active === false && ctx.catalogPackageIds.has(entry.identity.packageId)) return [];
   if (entry.active && !missing) return [];
   if (!ctx.hasTag(entry.identity)) return [];
   if (
@@ -237,9 +241,15 @@ function inactiveGroupChildren(
   });
 }
 
-function structuredPackageIds(entries: ModListEntryDto[]): string[] {
+function structuredPackageIds(
+  entries: ModListEntryDto[],
+  catalogPackageIds: Set<string>,
+): string[] {
   return entries.flatMap((entry) => {
-    if (entry.kind === 'mod') return [entry.identity.packageId];
+    if (entry.kind === 'mod') {
+      if (entry.active === false && catalogPackageIds.has(entry.identity.packageId)) return [];
+      return [entry.identity.packageId];
+    }
     if (entry.kind === 'group') return entry.entries.map((child) => child.identity.packageId);
     return [];
   });

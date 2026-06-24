@@ -44,7 +44,6 @@ type InactiveEntryRowProps = {
     event?: MouseEvent<HTMLButtonElement>,
   ) => void;
   onContextOpen: (entry: ModListEntryDto) => void;
-  onActivate: (entryId: string) => void;
   onRenameGroup: (entryId: string, name: string) => void;
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
@@ -60,7 +59,6 @@ export function InactiveEntryRow({
   onWarmFileInfo,
   onSelect,
   onContextOpen,
-  onActivate,
   onRenameGroup,
   onEditAlias,
   onOpenModFolder,
@@ -81,7 +79,6 @@ export function InactiveEntryRow({
         <div
           ref={setNodeRef}
           onPointerEnter={() => warmInactiveEntry(row.entry, onWarmFileInfo)}
-          onDoubleClick={() => onActivate(row.entry.id)}
           className={inactiveRowClassName(isDragging, row.missing)}
           {...attributes}
           {...listeners}
@@ -107,7 +104,6 @@ export function InactiveEntryRow({
       <InactiveEntryMenu
         entry={row.entry}
         sourceKey={sourceKey}
-        onActivate={onActivate}
         onRenameGroup={onRenameGroup}
         onEditAlias={onEditAlias}
         onOpenModFolder={onOpenModFolder}
@@ -132,7 +128,6 @@ type InactiveChildRowProps = {
   modByPackageId: Map<string, ModMetadataDto>;
   onWarmFileInfo: (sourceKey: string | null | undefined, immediate?: boolean) => void;
   onSelect: (child: ModListGroupChildDto) => void;
-  onActivate: (groupId: string, childId: string) => void;
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
@@ -146,7 +141,6 @@ export function InactiveChildRow({
   modByPackageId,
   onWarmFileInfo,
   onSelect,
-  onActivate,
   onEditAlias,
   onOpenModFolder,
   onOpenSteamWorkshopPage,
@@ -166,7 +160,6 @@ export function InactiveChildRow({
         <div
           ref={setNodeRef}
           onPointerEnter={() => onWarmFileInfo(sourceKey)}
-          onDoubleClick={() => onActivate(row.groupId, row.child.id)}
           className={cn(inactiveRowClassName(isDragging, row.missing), 'h-6 pl-8')}
           {...attributes}
           {...listeners}
@@ -193,7 +186,6 @@ export function InactiveChildRow({
       <InactiveChildMenu
         row={row}
         sourceKey={sourceKey}
-        onActivate={onActivate}
         onEditAlias={onEditAlias}
         onOpenModFolder={onOpenModFolder}
         onOpenSteamWorkshopPage={onOpenSteamWorkshopPage}

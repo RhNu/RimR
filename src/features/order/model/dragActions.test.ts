@@ -117,70 +117,38 @@ describe('order model drag actions basics', () => {
     );
 
     expect(action).toEqual({
-      type: 'setEntriesActive',
+      type: 'removeEntries',
       entryIds: ['entry-a', 'group-required'],
-      active: false,
     });
   });
 });
 
 describe('order model inactive entry drag actions', () => {
-  it('inserts inactive entries at the active drop indicator target', () => {
-    const disabled = modListReducer(baseModList(), {
-      type: 'setEntryActive',
-      entryId: 'entry-a',
-      active: false,
-    });
+  it('ignores inactive structured entries dropped on active rows', () => {
     const action = resolveDragAction(
       input({
-        modList: disabled,
         activeId: 'inactive:entry:entry-a',
         overId: 'active:entry:group-required',
         dropIndicator: { targetId: 'active:entry:group-required', edge: 'after' },
       }),
     );
 
-    expect(action).toEqual({
-      type: 'moveEntriesAndSetActive',
-      entryIds: ['entry-a'],
-      targetEntryId: 'group-required',
-      edge: 'after',
-      active: true,
-    });
-    const movedIds = action
-      ? modListReducer(disabled, action).entries.map((entry) => entry.id)
-      : [];
-    expect(movedIds).toEqual(['sep-1', 'group-required']);
+    expect(action).toBeNull();
   });
 
-  it('moves inactive entries into active groups when dropped inside', () => {
-    const disabled = modListReducer(baseModList(), {
-      type: 'setEntryActive',
-      entryId: 'entry-a',
-      active: false,
-    });
+  it('ignores inactive structured entries dropped inside active groups', () => {
     const action = resolveDragAction(
       input({
-        modList: disabled,
         activeId: 'inactive:entry:entry-a',
         overId: 'active:entry:group-required',
         dropIndicator: { targetId: 'active:entry:group-required', edge: 'inside' },
       }),
     );
 
-    expect(action).toEqual({
-      type: 'moveEntriesToGroupAndSetActive',
-      entryIds: ['entry-a'],
-      groupId: 'group-required',
-      index: 1,
-      active: true,
-    });
-    const moved = action ? modListReducer(disabled, action) : disabled;
-    expect(moved.entries).toHaveLength(2);
-    expect(moved.activeMods).toEqual(['b.dep']);
+    expect(action).toBeNull();
   });
 
-  it('uses side-qualified ids for moving inactive group children into active', () => {
+  it('ignores inactive structured group children dropped on active', () => {
     const action = resolveDragAction(
       input({
         activeId: 'inactive:child:group-required:child-b',
@@ -188,12 +156,7 @@ describe('order model inactive entry drag actions', () => {
       }),
     );
 
-    expect(action).toEqual({
-      type: 'setGroupChildrenActive',
-      groupId: 'group-required',
-      childIds: ['child-b'],
-      active: true,
-    });
+    expect(action).toBeNull();
   });
 });
 

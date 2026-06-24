@@ -98,7 +98,7 @@ export function useOrderEditActions({
       groupId: createGroupId(),
       name,
       index: draftRef.current.entries.length,
-      active: false,
+      active: true,
     });
     resetSelections();
   }
@@ -134,15 +134,11 @@ function useDialogOpenActions({
       setDialog({ kind: 'createInactiveGroup', value: t('order.groupDefault') });
     }, [setDialog, t]),
     editInactiveAlias: useEditInactiveAlias(setDialog),
-    removeActiveEntry: useDeactivateOrRemoveEntry(draftRef, applyDraft),
-    activateEntry: useCallback(
-      (entryId: string) => applyDraft({ type: 'setEntryActive', entryId, active: true }),
-      [applyDraft],
-    ),
+    removeActiveEntry: useRemoveEntry(draftRef, applyDraft),
     handleActiveDoubleClick: useCallback(
       (entry: ModListEntryDto) => {
         if (entry.kind === 'mod') {
-          applyDraft({ type: 'setEntryActive', entryId: entry.id, active: false });
+          applyDraft({ type: 'removeEntry', entryId: entry.id });
         }
       },
       [applyDraft],
@@ -170,41 +166,21 @@ function useDialogOpenActions({
     ),
     removeGroupChild: useCallback(
       (groupId: string, childId: string) => {
-        applyDraft({
-          type: 'setGroupChildrenActive',
-          groupId,
-          childIds: [childId],
-          active: false,
-        });
-      },
-      [applyDraft],
-    ),
-    activateGroupChild: useCallback(
-      (groupId: string, childId: string) => {
-        applyDraft({
-          type: 'setGroupChildrenActive',
-          groupId,
-          childIds: [childId],
-          active: true,
-        });
+        applyDraft({ type: 'removeGroupChild', groupId, childId });
       },
       [applyDraft],
     ),
   };
 }
 
-function useDeactivateOrRemoveEntry(
+function useRemoveEntry(
   draftRef: MutableRefObject<ModListDto | null>,
   applyDraft: (action: ModListAction) => void,
 ) {
   return useCallback(
     (entryId: string): void => {
-      const entry = draftRef.current?.entries.find((candidate) => candidate.id === entryId);
-      if (entry?.kind === 'separator') {
-        applyDraft({ type: 'removeEntry', entryId });
-        return;
-      }
-      applyDraft({ type: 'setEntryActive', entryId, active: false });
+      if (!draftRef.current?.entries.some((candidate) => candidate.id === entryId)) return;
+      applyDraft({ type: 'removeEntry', entryId });
     },
     [applyDraft, draftRef],
   );

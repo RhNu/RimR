@@ -116,7 +116,36 @@ describe('order model render selectors', () => {
     ]);
   });
 
-  it('builds inactive render rows for mixed groups and missing children', () => {
+  it('builds active render rows without filtering legacy inactive flags', () => {
+    const rows = buildActiveRenderRows(
+      [
+        { kind: 'mod', id: 'entry-a', active: false, identity: { packageId: 'a.core' } },
+        {
+          kind: 'group',
+          id: 'group-required',
+          name: 'Required',
+          collapsed: false,
+          entries: [{ id: 'child-b', active: false, identity: { packageId: 'b.dep' } }],
+        },
+      ],
+      {
+        query: '',
+        aliases: [],
+        modByPackageId: new Map([
+          ['a.core', mod('a.core', 'Core')],
+          ['b.dep', mod('b.dep', 'Dependency')],
+        ]),
+      },
+    );
+
+    expect(rows.map((row) => row.id)).toEqual([
+      'active:entry:entry-a',
+      'active:entry:group-required',
+      'active:child:group-required:child-b',
+    ]);
+  });
+
+  it('builds inactive render rows from catalog mods and missing structured entries', () => {
     const rows = buildInactiveRenderRows(
       [
         {
@@ -131,7 +160,7 @@ describe('order model render selectors', () => {
           ],
         },
       ],
-      [mod('c.extra', 'Extra')],
+      [mod('b.dep', 'Dependency'), mod('c.extra', 'Extra')],
       {
         query: '',
         aliases: [],
@@ -148,11 +177,11 @@ describe('order model render selectors', () => {
 
     expect(rows.map((row) => row.id)).toEqual([
       'inactive:entry:group-mixed',
-      'inactive:child:group-mixed:child-inactive',
       'inactive:child:group-mixed:child-missing',
+      'inactive:catalog:b.dep',
       'inactive:catalog:c.extra',
     ]);
-    expect(rows[2]).toMatchObject({ kind: 'child', missing: true });
+    expect(rows[1]).toMatchObject({ kind: 'child', missing: true });
   });
 
   it('prunes hidden selections and keeps the selected drag payload ordered by selection', () => {
@@ -240,11 +269,6 @@ describe('order model inactive render sorting', () => {
     );
 
     expect(rows.map((row) => row.id)).toEqual([
-      'inactive:entry:group-hot',
-      'inactive:child:group-hot:child-c',
-      'inactive:child:group-hot:child-a',
-      'inactive:entry:group-cold',
-      'inactive:child:group-cold:child-b',
       'inactive:catalog:m.mid',
       'inactive:catalog:z.low',
       'inactive:entry:entry-missing',

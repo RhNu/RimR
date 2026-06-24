@@ -85,10 +85,10 @@ describe('order model tag filtering', () => {
 });
 
 describe('order model tag render rows', () => {
-  it('builds inactive render rows filtered by tag, keeping group children that have the tag', () => {
+  it('builds inactive render rows filtered by tag from catalog and missing structured rows', () => {
     const tagDefs: TagDefDto[] = [{ id: 'tag-q', name: 'Quality' }];
     const modTags: ModTagBindingDto[] = [
-      { identity: { packageId: 'b.dep' }, tagIds: ['tag-q'] },
+      { identity: { packageId: 'missing.mod' }, tagIds: ['tag-q'] },
       {
         identity: { packageId: 'c.extra', sourceKind: 'local', sourceKey: 'local:c.extra' },
         tagIds: ['tag-q'],
@@ -103,12 +103,12 @@ describe('order model tag render rows', () => {
           collapsed: false,
           entries: [
             { id: 'child-active', active: true, identity: { packageId: 'a.core' } },
-            { id: 'child-inactive', active: false, identity: { packageId: 'b.dep' } },
+            { id: 'child-missing', active: true, identity: { packageId: 'missing.mod' } },
             { id: 'child-other', active: false, identity: { packageId: 'other.mod' } },
           ],
         },
       ],
-      [mod('c.extra', 'Extra'), mod('d.other', 'Other')],
+      [mod('b.dep', 'Dependency'), mod('c.extra', 'Extra'), mod('d.other', 'Other')],
       {
         query: '',
         aliases: [],
@@ -126,7 +126,7 @@ describe('order model tag render rows', () => {
 
     expect(rows.map((row) => row.id)).toEqual([
       'inactive:entry:group-mixed',
-      'inactive:child:group-mixed:child-inactive',
+      'inactive:child:group-mixed:child-missing',
       'inactive:catalog:c.extra',
     ]);
   });

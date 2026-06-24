@@ -157,8 +157,7 @@ function inactiveModEntryRenderRows(
   ctx: InactiveRenderContext,
 ): InactiveRenderRow[] {
   const missing = !ctx.searchOptions.modByPackageId.has(entry.identity.packageId);
-  if (entry.active === false && ctx.catalogPackageIds.has(entry.identity.packageId)) return [];
-  if (entry.active && !missing) return [];
+  if (!missing) return [];
   if (!ctx.hasTag(entry.identity)) return [];
   if (
     ctx.tokens.length > 0 &&
@@ -215,7 +214,7 @@ function inactiveGroupChildren(
 ): ModListGroupChildDto[] {
   return entry.entries.filter((child) => {
     const missing = !ctx.searchOptions.modByPackageId.has(child.identity.packageId);
-    if (child.active && !missing) return false;
+    if (!missing) return false;
     if (!ctx.hasTag(child.identity)) return false;
     if (ctx.tokens.length === 0 || groupMatches) return true;
     return matchesTokens(identitySearchText(child.identity, ctx.searchOptions), ctx.tokens);
@@ -231,7 +230,12 @@ function structuredPackageIds(
       if (entry.active === false && catalogPackageIds.has(entry.identity.packageId)) return [];
       return [entry.identity.packageId];
     }
-    if (entry.kind === 'group') return entry.entries.map((child) => child.identity.packageId);
+    if (entry.kind === 'group') {
+      return entry.entries.flatMap((child) => {
+        if (child.active === false && catalogPackageIds.has(child.identity.packageId)) return [];
+        return [child.identity.packageId];
+      });
+    }
     return [];
   });
 }

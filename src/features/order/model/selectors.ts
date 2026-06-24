@@ -148,9 +148,6 @@ function entryRenderRows(
   tokens: string[],
   options: ActiveRenderOptions,
 ): ActiveRenderRow[] {
-  if (entry.kind === 'mod' && !entry.active) {
-    return [];
-  }
   if (entry.kind === 'group') {
     return groupRenderRows(entry, tokens, options);
   }
@@ -166,11 +163,10 @@ function groupRenderRows(
   options: ActiveRenderOptions,
 ): ActiveRenderRow[] {
   const groupMatches = matchesTokens(entry.name, tokens);
-  const activeChildren = entry.entries.filter((child) => child.active);
   const children =
     tokens.length === 0 || groupMatches
-      ? activeChildren
-      : activeChildren.filter((child) =>
+      ? entry.entries
+      : entry.entries.filter((child) =>
           matchesTokens(identitySearchText(child.identity, options), tokens),
         );
   if (tokens.length > 0 && !groupMatches && children.length === 0) {

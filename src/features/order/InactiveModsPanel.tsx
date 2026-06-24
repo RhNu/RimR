@@ -46,8 +46,6 @@ type RowProps = {
   onContextOpen: (mod: ModMetadataDto) => void;
   onContextOpenEntry: (entry: ModListEntryDto) => void;
   onAdd: (mod: ModMetadataDto) => void;
-  onActivateEntry: (entryId: string) => void;
-  onActivateChild: (groupId: string, childId: string) => void;
   onDoubleClick: (mod: ModMetadataDto) => void;
   onRenameGroup: (entryId: string, name: string) => void;
   onCreateGroup: () => void;
@@ -89,8 +87,6 @@ export function InactiveModsPanel() {
     onContextOpen: selection.ensureInactiveSelected,
     onContextOpenEntry: selection.ensureActiveSelected,
     onAdd: editActions.addInactiveMod,
-    onActivateEntry: editActions.activateEntry,
-    onActivateChild: editActions.activateGroupChild,
     onDoubleClick: editActions.addInactiveMod,
     onRenameGroup: editActions.renameActiveGroup,
     onCreateGroup: editActions.createInactiveGroupDialog,
@@ -171,7 +167,6 @@ function InactivePanelRow({ row, ...props }: RowProps & { row: InactiveRenderRow
         onWarmFileInfo={props.onWarmFileInfo}
         onSelect={props.onSelectEntry}
         onContextOpen={props.onContextOpenEntry}
-        onActivate={props.onActivateEntry}
         onRenameGroup={props.onRenameGroup}
         onEditAlias={props.onEditActiveAlias}
         onOpenModFolder={props.onOpenModFolder}
@@ -194,7 +189,6 @@ function InactivePanelRow({ row, ...props }: RowProps & { row: InactiveRenderRow
       modByPackageId={props.modByPackageId}
       onWarmFileInfo={props.onWarmFileInfo}
       onSelect={props.onSelectChild}
-      onActivate={props.onActivateChild}
       onEditAlias={props.onEditActiveAlias}
       onOpenModFolder={props.onOpenModFolder}
       onOpenSteamWorkshopPage={props.onOpenSteamWorkshopPage}

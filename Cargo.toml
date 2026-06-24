@@ -3,7 +3,7 @@ members = ["crates/rimr-bindings", "crates/rimr-core", "crates/rimr-steam", "src
 resolver = "2"
 
 [workspace.package]
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 authors = ["Rhynia"]
 license = "GPL-3.0"

@@ -31,7 +31,7 @@ describe('sameDropIndicator', () => {
   });
 });
 
-describe('order model drag actions', () => {
+describe('order model drag actions basics', () => {
   it('computes before, inside-group, and after drop intents from pointer position', () => {
     const rect = { top: 100, height: 90 };
 
@@ -121,6 +121,63 @@ describe('order model drag actions', () => {
       entryIds: ['entry-a', 'group-required'],
       active: false,
     });
+  });
+});
+
+describe('order model inactive entry drag actions', () => {
+  it('inserts inactive entries at the active drop indicator target', () => {
+    const disabled = modListReducer(baseModList(), {
+      type: 'setEntryActive',
+      entryId: 'entry-a',
+      active: false,
+    });
+    const action = resolveDragAction(
+      input({
+        modList: disabled,
+        activeId: 'inactive:entry:entry-a',
+        overId: 'active:entry:group-required',
+        dropIndicator: { targetId: 'active:entry:group-required', edge: 'after' },
+      }),
+    );
+
+    expect(action).toEqual({
+      type: 'moveEntriesAndSetActive',
+      entryIds: ['entry-a'],
+      targetEntryId: 'group-required',
+      edge: 'after',
+      active: true,
+    });
+    const movedIds = action
+      ? modListReducer(disabled, action).entries.map((entry) => entry.id)
+      : [];
+    expect(movedIds).toEqual(['sep-1', 'group-required', 'entry-a']);
+  });
+
+  it('moves inactive entries into active groups when dropped inside', () => {
+    const disabled = modListReducer(baseModList(), {
+      type: 'setEntryActive',
+      entryId: 'entry-a',
+      active: false,
+    });
+    const action = resolveDragAction(
+      input({
+        modList: disabled,
+        activeId: 'inactive:entry:entry-a',
+        overId: 'active:entry:group-required',
+        dropIndicator: { targetId: 'active:entry:group-required', edge: 'inside' },
+      }),
+    );
+
+    expect(action).toEqual({
+      type: 'moveEntriesToGroupAndSetActive',
+      entryIds: ['entry-a'],
+      groupId: 'group-required',
+      index: 1,
+      active: true,
+    });
+    const moved = action ? modListReducer(disabled, action) : disabled;
+    expect(moved.entries).toHaveLength(2);
+    expect(moved.activeMods).toEqual(['b.dep', 'a.core']);
   });
 
   it('uses side-qualified ids for moving inactive group children into active', () => {

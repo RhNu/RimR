@@ -12,7 +12,7 @@ import { ModTypeIcon } from '@/components/mod/ModTypeIcon';
 import { parseCatalogId, parseChildId, parseEntryId } from '@/features/order/dndIds';
 import { identityForMod, labelForIdentity } from '@/features/order/identity';
 import { colorsForIdentity } from '@/features/tags/tagModel';
-import { entriesByIds, entryById, orderedSelectedDragIds } from '@/features/order/model';
+import { entryById, orderedSelectedDragIds } from '@/features/order/model';
 
 export type DragOverlayState = {
   label: string;
@@ -94,7 +94,10 @@ function entryDragOverlay(
 ): DragOverlayState | null {
   const entryId = parseEntryId(id)?.entryId ?? id;
   const entryIds = orderedSelectedDragIds(entryId, selected, orderedIds);
-  const entry = entriesByIds(modList, entryIds)[0] ?? entryById(modList, entryId);
+  const selectedEntries = new Set(entryIds);
+  const entry =
+    modList.entries.find((candidate) => selectedEntries.has(candidate.id)) ??
+    entryById(modList, entryId);
   if (!entry) return null;
   return {
     label: labelForEntry(entry, aliases, modByPackageId),

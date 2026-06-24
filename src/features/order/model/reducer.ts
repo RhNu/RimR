@@ -2,6 +2,7 @@ import type { ModListDto, ModMetadataDto } from '@/commands';
 import { normalizeModList } from './normalize';
 import {
   moveEntriesAndSetActive,
+  moveEntriesToGroupAndSetActive,
   setEntriesActive,
   setGroupChildrenActive,
 } from './reducerActiveOperations';
@@ -76,6 +77,14 @@ export function modListReducer(modList: ModListDto, action: ModListAction): ModL
       );
     case 'moveEntriesToGroup':
       return moveEntriesToGroup(modList, action.entryIds, action.groupId, action.index);
+    case 'moveEntriesToGroupAndSetActive':
+      return moveEntriesToGroupAndSetActive(
+        modList,
+        action.entryIds,
+        action.groupId,
+        action.index,
+        action.active,
+      );
     case 'moveGroupChild':
       return moveGroupChild(
         modList,

@@ -50,6 +50,13 @@ export type ModListAction =
       edge: Exclude<DropEdge, 'inside'>;
       active: boolean;
     }
+  | {
+      type: 'moveEntriesToGroupAndSetActive';
+      entryIds: string[];
+      groupId: string;
+      index: number;
+      active: boolean;
+    }
   | { type: 'moveEntriesToGroup'; entryIds: string[]; groupId: string; index: number }
   | {
       type: 'moveGroupChild';

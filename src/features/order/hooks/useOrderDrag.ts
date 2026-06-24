@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import type {
   DisplayAliasDto,
@@ -47,6 +47,14 @@ export function useOrderDrag({
 }) {
   const [dragOverlay, setDragOverlay] = useState<DragOverlayState | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicatorState | null>(null);
+  const dropIndicatorRef = useRef<DropIndicatorState | null>(null);
+  const setTrackedDropIndicator: Dispatch<SetStateAction<DropIndicatorState | null>> = (update) => {
+    setDropIndicator((current) => {
+      const next = typeof update === 'function' ? update(current) : update;
+      dropIndicatorRef.current = next;
+      return next;
+    });
+  };
   const handlers = createDragHandlers({
     activeDropId,
     inactiveDropId,
@@ -60,9 +68,9 @@ export function useOrderDrag({
     tagDefs,
     modTags,
     applyDraft,
-    dropIndicator,
+    dropIndicatorRef,
     setDragOverlay,
-    setDropIndicator,
+    setDropIndicator: setTrackedDropIndicator,
   });
 
   return {
@@ -86,7 +94,7 @@ type DragHandlerInput = {
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
   applyDraft: (action: ModListAction) => void;
-  dropIndicator: DropIndicatorState | null;
+  dropIndicatorRef: { current: DropIndicatorState | null };
   setDragOverlay: (overlay: DragOverlayState | null) => void;
   setDropIndicator: Dispatch<SetStateAction<DropIndicatorState | null>>;
 };
@@ -104,7 +112,7 @@ function createDragHandlers({
   tagDefs,
   modTags,
   applyDraft,
-  dropIndicator,
+  dropIndicatorRef,
   setDragOverlay,
   setDropIndicator,
 }: DragHandlerInput) {
@@ -144,7 +152,7 @@ function createDragHandlers({
   function handleDragEnd(event: DragEndEvent): void {
     const activeId = String(event.active.id);
     const overId = event.over ? String(event.over.id) : null;
-    const currentDropIndicator = dropIndicator;
+    const currentDropIndicator = dropIndicatorRef.current;
     setDragOverlay(null);
     setDropIndicator(null);
     const action = resolveActionForDragEnd(activeId, overId, {
@@ -262,7 +270,7 @@ function indicatorForDragOver(
       entry.kind === 'group' &&
       entryId.side === 'active' &&
       (parseCatalogId(String(event.active.id)) != null ||
-        parseEntryId(String(event.active.id))?.side === 'active');
+        parseEntryId(String(event.active.id)) != null);
     const intent = computeDropIntent('active', overId, rect, pointerY, allowInside);
     return { targetId: overId, edge: intent.edge };
   }

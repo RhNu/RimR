@@ -39,17 +39,11 @@ export function resolveDragAction(input: ResolveDragActionInput): ModListAction 
   if (input.activeId === input.overId) {
     return null;
   }
-  if (parseCatalogId(input.activeId)) {
-    return resolveCatalogDrag(input);
-  }
+  if (parseCatalogId(input.activeId)) return resolveCatalogDrag(input);
   const activeEntry = parseEntryId(input.activeId);
-  if (activeEntry) {
-    return resolveEntryDrag(input);
-  }
+  if (activeEntry) return resolveEntryDrag(input);
   const activeChild = parseChildId(input.activeId);
-  if (activeChild) {
-    return resolveChildDrag(input);
-  }
+  if (activeChild) return resolveChildDrag(input);
   return null;
 }
 
@@ -160,11 +154,29 @@ function entryDropOnEntry(
   over: { side: 'active' | 'inactive'; entryId: string },
 ): ModListAction | null {
   const targetEntry = entryById(input.modList, over.entryId);
-  const movingEntries = entriesByIds(input.modList, entryIds);
+  const movingEntryIds = active.side === 'inactive' ? [active.entryId] : entryIds;
+  const movingEntries = entriesByIds(input.modList, movingEntryIds);
+  if (canDropInsideGroup(targetEntry, input.dropIndicator, movingEntries)) {
+    if (active.side !== over.side) {
+      return {
+        type: 'moveEntriesToGroupAndSetActive',
+        entryIds: movingEntryIds,
+        groupId: over.entryId,
+        index: targetEntry.entries.length,
+        active: over.side === 'active',
+      };
+    }
+    return {
+      type: 'moveEntriesToGroup',
+      entryIds,
+      groupId: over.entryId,
+      index: targetEntry.entries.length,
+    };
+  }
   if (active.side !== over.side) {
     return {
       type: 'moveEntriesAndSetActive',
-      entryIds: active.side === 'inactive' ? [active.entryId] : entryIds,
+      entryIds: movingEntryIds,
       targetEntryId: over.entryId,
       edge: entryEdge(
         input.modList,
@@ -174,18 +186,6 @@ function entryDropOnEntry(
         input.overId,
       ),
       active: over.side === 'active',
-    };
-  }
-  if (
-    targetEntry?.kind === 'group' &&
-    input.dropIndicator?.edge === 'inside' &&
-    allMods(movingEntries)
-  ) {
-    return {
-      type: 'moveEntriesToGroup',
-      entryIds,
-      groupId: over.entryId,
-      index: targetEntry.entries.length,
     };
   }
   return {
@@ -252,9 +252,17 @@ function resolveChildDrag(input: ResolveDragActionInput): ModListAction | null {
   };
 }
 
-export function entriesByIds(modList: ModListDto, entryIds: string[]): ModListEntryDto[] {
+function entriesByIds(modList: ModListDto, entryIds: string[]): ModListEntryDto[] {
   const selected = new Set(entryIds);
   return modList.entries.filter((entry) => selected.has(entry.id));
+}
+
+function canDropInsideGroup(
+  entry: ModListEntryDto | undefined,
+  indicator: DropIndicatorState | null,
+  movingEntries: ModListEntryDto[],
+): entry is Extract<ModListEntryDto, { kind: 'group' }> {
+  return entry?.kind === 'group' && indicator?.edge === 'inside' && allMods(movingEntries);
 }
 
 function allMods(entries: ModListEntryDto[]): boolean {

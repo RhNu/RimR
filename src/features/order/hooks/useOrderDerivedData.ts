@@ -172,6 +172,8 @@ function useInactiveMods({
       modTags,
       tagDefs,
       inactiveTagFilter,
+      availableSortKey,
+      availableSortDirection,
     ],
   );
   const inactivePackageIds = useMemo(

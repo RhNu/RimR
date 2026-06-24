@@ -15,7 +15,7 @@ describe('order model reducer basics', () => {
     ]);
   });
 
-  it('treats inactive top-level mods as available for inactive sorting', () => {
+  it('treats structured mods as unavailable until normalized', () => {
     const current = baseModList([
       {
         kind: 'mod',
@@ -32,10 +32,7 @@ describe('order model reducer basics', () => {
       },
     ]);
 
-    expect(unintroducedMods(catalogMods, current).map((mod) => mod.packageId)).toEqual([
-      'a.core',
-      'c.extra',
-    ]);
+    expect(unintroducedMods(catalogMods, current).map((mod) => mod.packageId)).toEqual(['c.extra']);
   });
 
   it('adds catalog mods at the requested index and skips active duplicates', () => {
@@ -174,7 +171,7 @@ describe('order model reducer structure actions', () => {
 });
 
 describe('order model reducer active state and separators', () => {
-  it('toggles top-level entries and group children between active and inactive', () => {
+  it('removes top-level entries and group children when set inactive', () => {
     const withExtra = modListReducer(baseModList(), {
       type: 'addModToGroup',
       groupId: 'group-required',
@@ -191,10 +188,7 @@ describe('order model reducer active state and separators', () => {
     expect(disabled.activeMods).toEqual(['a.core', 'c.extra']);
     expect(disabled.entries[2]).toMatchObject({
       kind: 'group',
-      entries: [
-        { id: 'child-b', active: false },
-        { id: 'child-c-extra', active: true },
-      ],
+      entries: [{ id: 'child-c-extra', active: true }],
     });
 
     const reenabled = modListReducer(disabled, {
@@ -205,7 +199,7 @@ describe('order model reducer active state and separators', () => {
     expect(reenabled.activeMods).toEqual(['c.extra']);
   });
 
-  it('keeps a group when removing it from active by deactivating children', () => {
+  it('keeps a group when removing it from active by removing children', () => {
     const next = modListReducer(baseModList(), {
       type: 'setEntryActive',
       entryId: 'group-required',
@@ -216,7 +210,7 @@ describe('order model reducer active state and separators', () => {
     expect(next.entries[2]).toMatchObject({
       kind: 'group',
       id: 'group-required',
-      entries: [{ id: 'child-b', active: false }],
+      entries: [],
     });
     expect(next.activeMods).toEqual(['a.core']);
   });
@@ -239,7 +233,7 @@ describe('order model reducer active state and separators', () => {
 });
 
 describe('order model missing mod cleanup', () => {
-  it('classifies missing entries by active state and removes inactive missing entries only', () => {
+  it('classifies all missing structured entries as active', () => {
     const current = baseModList([
       {
         kind: 'mod',
@@ -273,23 +267,24 @@ describe('order model missing mod cleanup', () => {
 
     const classified = classifyMissingEntries(current, catalogMods);
 
-    expect(classified.active).toEqual(['missing.active', 'missing.child']);
-    expect(classified.inactive).toEqual(['missing.inactive', 'missing.inactive.child']);
+    expect(classified.active).toEqual([
+      'missing.active',
+      'missing.inactive',
+      'missing.child',
+      'missing.inactive.child',
+    ]);
+    expect(classified.inactive).toEqual([]);
 
-    const cleaned = removeMissingEntries(current, classified.inactive);
+    const cleaned = removeMissingEntries(current, classified.active);
 
     expect(cleaned.entries).toMatchObject([
-      { kind: 'mod', id: 'entry-active-missing', active: true },
       { kind: 'separator', id: 'sep-1' },
       {
         kind: 'group',
         id: 'group-mixed',
-        entries: [
-          { id: 'child-installed', active: true, identity: { packageId: 'a.core' } },
-          { id: 'child-active-missing', active: true, identity: { packageId: 'missing.child' } },
-        ],
+        entries: [{ id: 'child-installed', active: true, identity: { packageId: 'a.core' } }],
       },
     ]);
-    expect(cleaned.activeMods).toEqual(['missing.active', 'a.core', 'missing.child']);
+    expect(cleaned.activeMods).toEqual(['a.core']);
   });
 });

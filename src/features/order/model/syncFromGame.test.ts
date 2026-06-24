@@ -64,7 +64,7 @@ describe('order model game sync', () => {
     expect(result.modList.entries.some((entry) => entry.kind === 'separator')).toBe(true);
   });
 
-  it('retains inactive and missing group children when syncing compatible active children', () => {
+  it('drops game-inactive group children when syncing compatible active children', () => {
     const current = modListReducer(baseModList(), {
       type: 'addModsToGroup',
       groupId: 'group-required',
@@ -84,10 +84,7 @@ describe('order model game sync', () => {
     expect(result.modList.entries[0]).toMatchObject({
       kind: 'group',
       id: 'group-required',
-      entries: [
-        { id: 'child-b', active: true, identity: { packageId: 'b.dep' } },
-        { id: 'child-c-extra', active: false, identity: { packageId: 'c.extra' } },
-      ],
+      entries: [{ id: 'child-b', active: true, identity: { packageId: 'b.dep' } }],
     });
   });
 });

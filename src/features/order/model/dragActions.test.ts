@@ -150,7 +150,7 @@ describe('order model inactive entry drag actions', () => {
     const movedIds = action
       ? modListReducer(disabled, action).entries.map((entry) => entry.id)
       : [];
-    expect(movedIds).toEqual(['sep-1', 'group-required', 'entry-a']);
+    expect(movedIds).toEqual(['sep-1', 'group-required']);
   });
 
   it('moves inactive entries into active groups when dropped inside', () => {
@@ -177,7 +177,7 @@ describe('order model inactive entry drag actions', () => {
     });
     const moved = action ? modListReducer(disabled, action) : disabled;
     expect(moved.entries).toHaveLength(2);
-    expect(moved.activeMods).toEqual(['b.dep', 'a.core']);
+    expect(moved.activeMods).toEqual(['b.dep']);
   });
 
   it('uses side-qualified ids for moving inactive group children into active', () => {

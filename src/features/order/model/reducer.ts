@@ -33,7 +33,7 @@ export function unintroducedMods(mods: ModMetadataDto[], modList: ModListDto): M
 
 function packagesUnavailableForInactiveCatalog(entries: ModListDto['entries']): string[] {
   return entries.flatMap((entry) => {
-    if (entry.kind === 'mod') return entry.active === false ? [] : [entry.identity.packageId];
+    if (entry.kind === 'mod') return [entry.identity.packageId];
     if (entry.kind === 'group') return entry.entries.map((child) => child.identity.packageId);
     return [];
   });

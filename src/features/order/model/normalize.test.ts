@@ -8,7 +8,7 @@ describe('order model normalization', () => {
     expect(flattenModListEntries(baseModList().entries)).toEqual(['a.core', 'b.dep']);
   });
 
-  it('defaults legacy entries to active and derives activeMods only from active items', () => {
+  it('drops legacy inactive entries and derives activeMods from retained items', () => {
     const normalized = normalizeModList(
       baseModList([
         {
@@ -36,15 +36,11 @@ describe('order model normalization', () => {
     );
 
     expect(normalized.entries).toMatchObject([
-      { kind: 'mod', id: 'entry-a', active: false },
       { kind: 'mod', id: 'entry-c', active: true },
       {
         kind: 'group',
         id: 'group-1',
-        entries: [
-          { id: 'child-b', active: true },
-          { id: 'child-missing', active: false },
-        ],
+        entries: [{ id: 'child-b', active: true }],
       },
     ]);
     expect(normalized.activeMods).toEqual(['c.extra', 'b.dep']);

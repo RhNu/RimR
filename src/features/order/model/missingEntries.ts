@@ -12,21 +12,19 @@ export function classifyMissingEntries(
 ): MissingEntryClassification {
   const installed = new Set(catalogMods.map((mod) => mod.packageId));
   const active: string[] = [];
-  const inactive: string[] = [];
-
   for (const entry of modList.entries) {
     if (entry.kind === 'mod') {
-      collectMissingPackage(entry.identity.packageId, entry.active, installed, active, inactive);
+      collectMissingPackage(entry.identity.packageId, installed, active);
       continue;
     }
     if (entry.kind === 'group') {
       for (const child of entry.entries) {
-        collectMissingPackage(child.identity.packageId, child.active, installed, active, inactive);
+        collectMissingPackage(child.identity.packageId, installed, active);
       }
     }
   }
 
-  return { active, inactive };
+  return { active, inactive: [] };
 }
 
 export function removeMissingEntries(modList: ModListDto, packageIds: string[]): ModListDto {
@@ -52,16 +50,9 @@ export function removeMissingEntries(modList: ModListDto, packageIds: string[]):
   return normalizeModList({ ...modList, entries });
 }
 
-function collectMissingPackage(
-  packageId: string,
-  activeState: boolean,
-  installed: Set<string>,
-  active: string[],
-  inactive: string[],
-): void {
+function collectMissingPackage(packageId: string, installed: Set<string>, active: string[]): void {
   if (installed.has(packageId)) return;
-  const target = activeState ? active : inactive;
-  if (!target.includes(packageId)) {
-    target.push(packageId);
+  if (!active.includes(packageId)) {
+    active.push(packageId);
   }
 }

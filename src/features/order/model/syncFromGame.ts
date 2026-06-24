@@ -26,7 +26,6 @@ export function syncModListFromGame(
     blocks,
     planSeparatorPlacement(modList.entries, gameIndex),
   );
-  entries.push(...inactiveTopLevelEntries(modList.entries, gameSet), ...groups.inactiveGroups);
   const next = normalizeModList({ ...modList, entries });
   const separatorMoves = movedSeparatorTitles(modList.entries, entries).map(
     (title): OrderStructureEvent => ({
@@ -56,14 +55,11 @@ function planGroupPreservation(
   const preserved = new Map<string, GroupEntry>();
   const packageToGroup = new Map<string, string>();
   const splitGroups: Array<{ name: string; packageIds: string[] }> = [];
-  const inactiveGroups: GroupEntry[] = [];
 
   for (const entry of entries) {
     if (entry.kind !== 'group') continue;
     const remaining = sortedRemainingChildren(entry, gameSet, gameIndex);
-    const inactive = inactiveChildren(entry, gameSet);
     if (remaining.length === 0) {
-      inactiveGroups.push({ ...entry, entries: inactive });
       continue;
     }
     if (
@@ -73,19 +69,16 @@ function planGroupPreservation(
         name: entry.name,
         packageIds: remaining.map((child) => child.identity.packageId),
       });
-      if (inactive.length > 0) {
-        inactiveGroups.push({ ...entry, entries: inactive });
-      }
       continue;
     }
-    const group = { ...entry, entries: [...remaining, ...inactive] };
+    const group = { ...entry, entries: remaining };
     preserved.set(entry.id, group);
     for (const child of remaining) {
       packageToGroup.set(child.identity.packageId, entry.id);
     }
   }
 
-  return { preserved, packageToGroup, splitGroups, inactiveGroups };
+  return { preserved, packageToGroup, splitGroups };
 }
 
 function buildGameOrderBlocks(
@@ -152,24 +145,6 @@ function sortedRemainingChildren(
         (gameIndex.get(a.identity.packageId) ?? Number.MAX_SAFE_INTEGER) -
         (gameIndex.get(b.identity.packageId) ?? Number.MAX_SAFE_INTEGER),
     );
-}
-
-function inactiveChildren(group: GroupEntry, gameSet: Set<string>) {
-  return group.entries
-    .filter((child) => !gameSet.has(child.identity.packageId))
-    .map((child) => ({ ...child, active: false }));
-}
-
-function inactiveTopLevelEntries(
-  entries: ModListEntryDto[],
-  gameSet: Set<string>,
-): ModListEntryDto[] {
-  return entries.flatMap((entry) => {
-    if (entry.kind === 'mod' && !gameSet.has(entry.identity.packageId)) {
-      return [{ ...entry, active: false }];
-    }
-    return [];
-  });
 }
 
 function indicesAreContiguous(indices: number[]): boolean {

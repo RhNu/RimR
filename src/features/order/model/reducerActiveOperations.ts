@@ -9,10 +9,13 @@ export function setEntriesActive(
   entryIds: string[],
   active: boolean,
 ): ModListDto {
+  if (active) return modList;
   const selected = new Set(entryIds);
   return normalizeModList({
     ...modList,
-    entries: modList.entries.map((entry) => setEntryActive(entry, selected, active)),
+    entries: modList.entries
+      .filter((entry) => !(selected.has(entry.id) && entry.kind === 'mod'))
+      .map((entry) => removeGroupChildrenForSelectedGroup(entry, selected)),
   });
 }
 
@@ -23,10 +26,10 @@ export function moveEntriesAndSetActive(
   edge: Exclude<DropEdge, 'inside'>,
   active: boolean,
 ): ModListDto {
-  const updated = setEntriesActive(modList, entryIds, active);
+  if (!active) return setEntriesActive(modList, entryIds, false);
   return normalizeModList({
-    ...updated,
-    entries: moveManyByTarget(updated.entries, entryIds, targetEntryId, edge),
+    ...modList,
+    entries: moveManyByTarget(modList.entries, entryIds, targetEntryId, edge),
   });
 }
 
@@ -37,6 +40,7 @@ export function moveEntriesToGroupAndSetActive(
   index: number,
   active: boolean,
 ): ModListDto {
+  if (!active) return setEntriesActive(modList, entryIds, false);
   const selected = new Set(entryIds);
   if (selected.has(groupId)) return modList;
   const moving = modList.entries
@@ -44,7 +48,7 @@ export function moveEntriesToGroupAndSetActive(
       (entry): entry is Extract<ModListEntryDto, { kind: 'mod' }> =>
         selected.has(entry.id) && entry.kind === 'mod',
     )
-    .map((entry) => ({ ...groupChildFromEntry(entry), active }));
+    .map((entry) => ({ ...groupChildFromEntry(entry), active: true }));
   if (moving.length === 0) return modList;
   const withoutMoving = modList.entries.filter((entry) => !selected.has(entry.id));
   return normalizeModList({
@@ -64,27 +68,20 @@ export function setGroupChildrenActive(
   childIds: string[],
   active: boolean,
 ): ModListDto {
+  if (active) return modList;
   const selected = new Set(childIds);
   return updateGroup(modList, groupId, (group) => ({
     ...group,
-    entries: group.entries.map((child) => (selected.has(child.id) ? { ...child, active } : child)),
+    entries: group.entries.filter((child) => !selected.has(child.id)),
   }));
 }
 
-function setEntryActive(
+function removeGroupChildrenForSelectedGroup(
   entry: ModListEntryDto,
   selected: Set<string>,
-  active: boolean,
 ): ModListEntryDto {
-  if (!selected.has(entry.id)) return entry;
-  if (entry.kind === 'mod') return { ...entry, active };
-  if (entry.kind === 'group') {
-    return {
-      ...entry,
-      entries: entry.entries.map((child) => ({ ...child, active })),
-    };
-  }
-  return entry;
+  if (entry.kind !== 'group' || !selected.has(entry.id)) return entry;
+  return { ...entry, entries: [] };
 }
 
 function updateGroup(

@@ -2,19 +2,15 @@ import type { ModIdentityDto, ModListDto, ModListEntryDto } from '@/commands';
 import type { GroupChild, GroupEntry, ModEntry, SeparatorEntry } from './types';
 
 export function flattenModListEntries(entries: ModListEntryDto[]): string[] {
-  const active: string[] = [];
+  const packages: string[] = [];
   for (const entry of entries) {
     if (entry.kind === 'mod') {
-      if (isActive(entry)) active.push(entry.identity.packageId);
+      packages.push(entry.identity.packageId);
     } else if (entry.kind === 'group') {
-      active.push(
-        ...entry.entries
-          .filter((child) => isActive(child))
-          .map((child) => child.identity.packageId),
-      );
+      packages.push(...entry.entries.map((child) => child.identity.packageId));
     }
   }
-  return active;
+  return packages;
 }
 
 export function normalizeModList(modList: ModListDto): ModListDto {
@@ -71,11 +67,11 @@ function normalizeModEntry(
   packages: Set<string>,
   entryIds: Set<string>,
 ): ModEntry | null {
-  if (packages.has(entry.identity.packageId)) {
+  if (entry.active === false || packages.has(entry.identity.packageId)) {
     return null;
   }
   packages.add(entry.identity.packageId);
-  return { ...entry, active: isActive(entry), id: uniqueId(entry.id, entryIds) };
+  return { ...entry, active: true, id: uniqueId(entry.id, entryIds) };
 }
 
 function normalizeGroupEntry(
@@ -86,11 +82,11 @@ function normalizeGroupEntry(
 ): GroupEntry | null {
   const children: GroupChild[] = [];
   for (const child of entry.entries) {
-    if (packages.has(child.identity.packageId)) {
+    if (child.active === false || packages.has(child.identity.packageId)) {
       continue;
     }
     packages.add(child.identity.packageId);
-    children.push({ ...child, active: isActive(child), id: uniqueId(child.id, childIds) });
+    children.push({ ...child, active: true, id: uniqueId(child.id, childIds) });
   }
   return { ...entry, id: uniqueId(entry.id, entryIds), entries: children };
 }
@@ -119,8 +115,4 @@ function storeIdentity(map: Map<string, ModIdentityDto>, identity: ModIdentityDt
   if (!map.has(identity.packageId)) {
     map.set(identity.packageId, identity);
   }
-}
-
-function isActive(value: { active?: boolean }): boolean {
-  return value.active ?? true;
 }

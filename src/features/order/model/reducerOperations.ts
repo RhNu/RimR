@@ -6,22 +6,18 @@ import type { DropEdge, GroupEntry, ModEntry } from './types';
 
 export function addMods(modList: ModListDto, mods: ModMetadataDto[], index: number): ModListDto {
   const structured = new Set(allStructuredPackages(modList.entries));
-  const reactivated = activateExistingPackages(
-    modList,
-    mods.filter((mod) => structured.has(mod.packageId)).map((mod) => mod.packageId),
-  );
-  const active = new Set(reactivated.activeMods);
+  const active = new Set(modList.activeMods);
   const additions = mods.filter((mod) => {
     if (structured.has(mod.packageId) || active.has(mod.packageId)) return false;
     active.add(mod.packageId);
     return true;
   });
   if (additions.length === 0) {
-    return reactivated;
+    return modList;
   }
-  const entries = [...reactivated.entries];
+  const entries = [...modList.entries];
   entries.splice(clampIndex(index, entries.length), 0, ...additions.map(modEntry));
-  return normalizeModList({ ...reactivated, entries });
+  return normalizeModList({ ...modList, entries });
 }
 
 export function addModsToGroup(
@@ -220,28 +216,6 @@ export function allStructuredPackages(entries: ModListEntryDto[]): string[] {
     if (entry.kind === 'mod') return [entry.identity.packageId];
     if (entry.kind === 'group') return entry.entries.map((child) => child.identity.packageId);
     return [];
-  });
-}
-
-function activateExistingPackages(modList: ModListDto, packageIds: string[]): ModListDto {
-  if (packageIds.length === 0) return modList;
-  const selected = new Set(packageIds);
-  return normalizeModList({
-    ...modList,
-    entries: modList.entries.map((entry) => {
-      if (entry.kind === 'mod' && selected.has(entry.identity.packageId)) {
-        return { ...entry, active: true };
-      }
-      if (entry.kind === 'group') {
-        return {
-          ...entry,
-          entries: entry.entries.map((child) =>
-            selected.has(child.identity.packageId) ? { ...child, active: true } : child,
-          ),
-        };
-      }
-      return entry;
-    }),
   });
 }
 

@@ -160,6 +160,8 @@ function useInactiveMods({
         modTags,
         tagDefs,
         tagFilter: inactiveTagFilter,
+        sortKey: availableSortKey,
+        sortDirection: availableSortDirection,
       }),
     [
       aliases,

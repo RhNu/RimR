@@ -192,6 +192,67 @@ describe('order model inactive render sorting', () => {
       'inactive:catalog:z.core',
     ]);
   });
+
+  it('keeps inactive groups above ordinary mods and sorts both sections by modified time', () => {
+    const rows = buildInactiveRenderRows(
+      [
+        {
+          kind: 'group',
+          id: 'group-cold',
+          name: 'Cold group',
+          collapsed: false,
+          entries: [{ id: 'child-b', active: false, identity: { packageId: 'b.dep' } }],
+        },
+        {
+          kind: 'mod',
+          id: 'entry-missing',
+          active: false,
+          identity: { packageId: 'missing.mod' },
+        },
+        {
+          kind: 'group',
+          id: 'group-hot',
+          name: 'Hot group',
+          collapsed: false,
+          entries: [
+            { id: 'child-a', active: false, identity: { packageId: 'a.core' } },
+            { id: 'child-c', active: false, identity: { packageId: 'c.extra' } },
+          ],
+        },
+      ],
+      [
+        mod('m.mid', 'Middle', { modifiedAtMs: 20 }),
+        mod('z.low', 'Low', { modifiedAtMs: 1 }),
+      ],
+      {
+        query: '',
+        aliases: [],
+        modByPackageId: new Map([
+          ['a.core', mod('a.core', 'Alpha', { modifiedAtMs: 5 })],
+          ['b.dep', mod('b.dep', 'Beta', { modifiedAtMs: 10 })],
+          ['c.extra', mod('c.extra', 'Charlie', { modifiedAtMs: 30 })],
+          ['m.mid', mod('m.mid', 'Middle', { modifiedAtMs: 20 })],
+          ['z.low', mod('z.low', 'Low', { modifiedAtMs: 1 })],
+        ]),
+        modTags: [],
+        tagDefs: [],
+        tagFilter: '',
+        sortKey: 'modifiedAt',
+        sortDirection: 'desc',
+      },
+    );
+
+    expect(rows.map((row) => row.id)).toEqual([
+      'inactive:entry:group-hot',
+      'inactive:child:group-hot:child-c',
+      'inactive:child:group-hot:child-a',
+      'inactive:entry:group-cold',
+      'inactive:child:group-cold:child-b',
+      'inactive:catalog:m.mid',
+      'inactive:catalog:z.low',
+      'inactive:entry:entry-missing',
+    ]);
+  });
 });
 
 describe('order model tag filtering', () => {

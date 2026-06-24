@@ -150,10 +150,7 @@ export function buildInactiveRenderRows(
       missing: false,
     });
   }
-  return [
-    ...sortGroupBlocks(groupBlocks, ctx).flat(),
-    ...sortOrdinaryRows(ordinaryRows, ctx),
-  ];
+  return [...sortGroupBlocks(groupBlocks, ctx).flat(), ...sortOrdinaryRows(ordinaryRows, ctx)];
 }
 
 function inactiveRenderContext(options: InactiveRenderOptions): InactiveRenderContext {
@@ -278,7 +275,10 @@ function sortGroupChildren(
   return [...children].sort((a, b) => compareIdentities(a.identity, b.identity, ctx));
 }
 
-function sortIdentities(identities: ModIdentityDto[], ctx: InactiveRenderContext): ModIdentityDto[] {
+function sortIdentities(
+  identities: ModIdentityDto[],
+  ctx: InactiveRenderContext,
+): ModIdentityDto[] {
   return [...identities].sort((a, b) => compareIdentities(a, b, ctx));
 }
 

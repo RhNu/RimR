@@ -220,10 +220,7 @@ describe('order model inactive render sorting', () => {
           ],
         },
       ],
-      [
-        mod('m.mid', 'Middle', { modifiedAtMs: 20 }),
-        mod('z.low', 'Low', { modifiedAtMs: 1 }),
-      ],
+      [mod('m.mid', 'Middle', { modifiedAtMs: 20 }), mod('z.low', 'Low', { modifiedAtMs: 1 })],
       {
         query: '',
         aliases: [],

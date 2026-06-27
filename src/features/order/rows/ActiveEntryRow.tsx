@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
 import { entrySortableId } from '@/features/order/dndIds';
@@ -34,7 +33,6 @@ export const ActiveEntryRow = memo(function ActiveEntryRow({
       <ContextMenuTrigger asChild>
         <div
           ref={sortable.setNodeRef}
-          style={sortableStyle(sortable.transform, sortable.transition)}
           onPointerEnter={() => warmEntryPreview(entry, onWarmFileInfo)}
           onDoubleClick={() => onDoubleClick(entry)}
           className={rowClassName(selected, sortable.isDragging)}
@@ -90,16 +88,6 @@ function warmEntryPreview(
   if (entry.kind === 'mod') {
     warm(entry.identity.sourceKey);
   }
-}
-
-function sortableStyle(
-  transform: Parameters<typeof CSS.Transform.toString>[0],
-  transition: string | undefined,
-) {
-  return {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 }
 
 function rowClassName(selected: boolean, isDragging: boolean): string {

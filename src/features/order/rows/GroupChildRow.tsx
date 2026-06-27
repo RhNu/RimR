@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { ModTypeIcon } from '@/components/mod/ModTypeIcon';
 import { cn } from '@/lib/utils';
@@ -42,7 +41,6 @@ export const GroupChildRow = memo(function GroupChildRow({
       <ContextMenuTrigger asChild>
         <div
           ref={sortable.setNodeRef}
-          style={sortableStyle(sortable.transform, sortable.transition)}
           onPointerEnter={() => onWarmFileInfo(child.identity.sourceKey)}
           onDoubleClick={() => onDoubleClick(groupId, child.id)}
           className={rowClassName(sortable.isDragging)}
@@ -89,16 +87,6 @@ export const GroupChildRow = memo(function GroupChildRow({
     </ContextMenu>
   );
 });
-
-function sortableStyle(
-  transform: Parameters<typeof CSS.Transform.toString>[0],
-  transition: string | undefined,
-) {
-  return {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-}
 
 function rowClassName(isDragging: boolean): string {
   return cn(

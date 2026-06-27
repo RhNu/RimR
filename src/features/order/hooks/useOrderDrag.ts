@@ -1,4 +1,4 @@
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState } from 'react';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import type {
   DisplayAliasDto,
@@ -11,12 +11,15 @@ import {
   computeDropIntent,
   entryById,
   resolveDragAction,
-  sameDropIndicator,
   type DropIndicatorState,
   type ModListAction,
 } from '@/features/order/model';
 import { dragOverlayForId, type DragOverlayState } from '@/features/order/view/dragOverlay';
 import { parseCatalogId, parseChildId, parseEntryId } from '@/features/order/dndIds';
+import {
+  createDropIndicatorStore,
+  type DropIndicatorStore,
+} from '@/features/order/hooks/dropIndicatorStore';
 
 export function useOrderDrag({
   activeDropId,
@@ -46,15 +49,9 @@ export function useOrderDrag({
   applyDraft: (action: ModListAction) => void;
 }) {
   const [dragOverlay, setDragOverlay] = useState<DragOverlayState | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<DropIndicatorState | null>(null);
-  const dropIndicatorRef = useRef<DropIndicatorState | null>(null);
-  const setTrackedDropIndicator: Dispatch<SetStateAction<DropIndicatorState | null>> = (update) => {
-    setDropIndicator((current) => {
-      const next = typeof update === 'function' ? update(current) : update;
-      dropIndicatorRef.current = next;
-      return next;
-    });
-  };
+  const dropIndicatorStoreRef = useRef<DropIndicatorStore | null>(null);
+  dropIndicatorStoreRef.current ??= createDropIndicatorStore();
+  const dropIndicatorStore = dropIndicatorStoreRef.current;
   const handlers = createDragHandlers({
     activeDropId,
     inactiveDropId,
@@ -68,15 +65,13 @@ export function useOrderDrag({
     tagDefs,
     modTags,
     applyDraft,
-    dropIndicatorRef,
+    dropIndicatorStore,
     setDragOverlay,
-    setDropIndicator: setTrackedDropIndicator,
   });
 
   return {
     dragOverlay,
-    dropIndicatorFor: (rowId: string) => dropIndicatorEdge(dropIndicator, rowId),
-    childDropIndicatorFor: (rowId: string) => childDropIndicatorEdge(dropIndicator, rowId),
+    dropIndicatorStore,
     ...handlers,
   };
 }
@@ -94,9 +89,8 @@ type DragHandlerInput = {
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
   applyDraft: (action: ModListAction) => void;
-  dropIndicatorRef: { current: DropIndicatorState | null };
+  dropIndicatorStore: DropIndicatorStore;
   setDragOverlay: (overlay: DragOverlayState | null) => void;
-  setDropIndicator: Dispatch<SetStateAction<DropIndicatorState | null>>;
 };
 
 function createDragHandlers({
@@ -112,12 +106,11 @@ function createDragHandlers({
   tagDefs,
   modTags,
   applyDraft,
-  dropIndicatorRef,
+  dropIndicatorStore,
   setDragOverlay,
-  setDropIndicator,
 }: DragHandlerInput) {
   function handleDragStart(event: DragStartEvent): void {
-    setDropIndicator(null);
+    dropIndicatorStore.set(null);
     setDragOverlay(
       dragOverlayForStart(event, {
         draft,
@@ -136,25 +129,22 @@ function createDragHandlers({
   function handleDragOver(event: DragOverEvent): void {
     const overId = event.over ? String(event.over.id) : null;
     if (!draft || !event.over || !overId || overId === activeDropId || overId === inactiveDropId) {
-      setStableDropIndicator(setDropIndicator, null);
+      dropIndicatorStore.set(null);
       return;
     }
     if (!parseEntryId(overId) && !parseChildId(overId)) {
-      setStableDropIndicator(setDropIndicator, null);
+      dropIndicatorStore.set(null);
       return;
     }
-    setStableDropIndicator(
-      setDropIndicator,
-      indicatorForDragOver(event, overId, draft, event.over.rect),
-    );
+    dropIndicatorStore.set(indicatorForDragOver(event, overId, draft, event.over.rect));
   }
 
   function handleDragEnd(event: DragEndEvent): void {
     const activeId = String(event.active.id);
     const overId = event.over ? String(event.over.id) : null;
-    const currentDropIndicator = dropIndicatorRef.current;
+    const currentDropIndicator = dropIndicatorStore.getSnapshot();
     setDragOverlay(null);
-    setDropIndicator(null);
+    dropIndicatorStore.set(null);
     const action = resolveActionForDragEnd(activeId, overId, {
       draft,
       modByPackageId,
@@ -173,16 +163,9 @@ function createDragHandlers({
     handleDragEnd,
     handleDragCancel: () => {
       setDragOverlay(null);
-      setDropIndicator(null);
+      dropIndicatorStore.set(null);
     },
   };
-}
-
-function setStableDropIndicator(
-  setDropIndicator: Dispatch<SetStateAction<DropIndicatorState | null>>,
-  next: DropIndicatorState | null,
-): void {
-  setDropIndicator((current) => (sameDropIndicator(current, next) ? current : next));
 }
 
 function dragOverlayForStart(
@@ -238,21 +221,6 @@ function resolveActionForDragEnd(
     visibleActiveEntryIds: input.visibleActiveEntryIds,
     dropIndicator: input.dropIndicator,
   });
-}
-
-function dropIndicatorEdge(
-  indicator: DropIndicatorState | null,
-  rowId: string,
-): 'before' | 'inside' | 'after' | undefined {
-  return indicator?.targetId === rowId ? indicator.edge : undefined;
-}
-
-function childDropIndicatorEdge(
-  indicator: DropIndicatorState | null,
-  rowId: string,
-): 'before' | 'after' | undefined {
-  const edge = dropIndicatorEdge(indicator, rowId);
-  return edge === 'inside' ? undefined : edge;
 }
 
 function indicatorForDragOver(

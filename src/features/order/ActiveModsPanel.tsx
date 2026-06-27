@@ -1,5 +1,4 @@
 import { useMemo, type MouseEvent } from 'react';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
 import type {
   DiagnosticDto,
@@ -22,6 +21,7 @@ import {
   selectedActiveModIdentities,
   tagTargetsForEntry,
 } from '@/features/order/model';
+import type { DropIndicatorStore } from '@/features/order/hooks/dropIndicatorStore';
 import { ACTIVE_DROP_ID } from './workspaceConstants';
 import {
   useOrderWorkspaceData,
@@ -44,8 +44,7 @@ type ActiveRowsProps = {
   selectedEntryIds: Set<string>;
   diagnosticsByPackage: Map<string, DiagnosticDto[]>;
   modByPackageId: Map<string, ModMetadataDto>;
-  onDropIndicator: (rowId: string) => 'before' | 'inside' | 'after' | undefined;
-  onChildDropIndicator: (rowId: string) => 'before' | 'after' | undefined;
+  dropIndicatorStore: DropIndicatorStore;
   onWarmFileInfo: (sourceKey: string | null | undefined, immediate?: boolean) => void;
   onSelectEntry: (
     entry: ModListEntryDto,
@@ -95,8 +94,7 @@ export function ActiveModsPanel() {
     selectedEntryIds: selection.selectedEntryIds,
     diagnosticsByPackage: derived.diagnosticsMap,
     modByPackageId: derived.modByPackageId,
-    onDropIndicator: drag.dropIndicatorFor,
-    onChildDropIndicator: drag.childDropIndicatorFor,
+    dropIndicatorStore: drag.dropIndicatorStore,
     onWarmFileInfo: preview.warmModPreview,
     onSelectEntry: selection.selectActiveEntry,
     onContextOpen: selection.ensureActiveSelected,
@@ -141,13 +139,12 @@ export function ActiveModsPanel() {
 }
 
 function ActiveRows(props: ActiveRowsProps) {
-  const sortableItems = useMemo(() => props.rows.map((row) => row.id), [props.rows]);
   const selectedTagIdentities = useMemo(
     () => selectedActiveModIdentities(props.rows, props.selectedEntryIds),
     [props.rows, props.selectedEntryIds],
   );
   return (
-    <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
+    <>
       {props.rows.map((row, index) =>
         row.kind === 'entry' ? (
           <ActiveEntryRow
@@ -162,7 +159,7 @@ function ActiveRows(props: ActiveRowsProps) {
             diagnosticsByPackage={props.diagnosticsByPackage}
             selected={row.entry.kind === 'mod' && props.selectedEntryIds.has(row.entry.id)}
             canCreateGroup={canCreateActiveGroup(props.selectedEntryIds)}
-            dropIndicator={props.onDropIndicator(row.id)}
+            dropIndicatorStore={props.dropIndicatorStore}
             onWarmFileInfo={props.onWarmFileInfo}
             onSelect={props.onSelectEntry}
             onContextOpen={props.onContextOpen}
@@ -193,7 +190,7 @@ function ActiveRows(props: ActiveRowsProps) {
             modTags={props.modTags}
             modByPackageId={props.modByPackageId}
             diagnostics={props.diagnosticsByPackage.get(row.child.identity.packageId) ?? []}
-            dropIndicator={props.onChildDropIndicator(row.id)}
+            dropIndicatorStore={props.dropIndicatorStore}
             onWarmFileInfo={props.onWarmFileInfo}
             onSelect={props.onSelectChild}
             onDoubleClick={props.onDoubleClickChild}
@@ -210,6 +207,6 @@ function ActiveRows(props: ActiveRowsProps) {
           />
         ),
       )}
-    </SortableContext>
+    </>
   );
 }

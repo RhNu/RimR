@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { SteamWorkshopOpenTarget } from '@/commands';
@@ -47,7 +46,7 @@ export function useOrderFilters(): OrderFilters {
 export function useOrderSensors() {
   return useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor),
   );
 }
 

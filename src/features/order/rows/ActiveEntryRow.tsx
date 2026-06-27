@@ -1,14 +1,14 @@
 import { memo } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
 import { entrySortableId } from '@/features/order/dndIds';
+import { useDragDropNode } from '@/features/order/hooks/useDragDropNode';
 import { TagColorBar } from '@/features/tags/TagColorBar';
 import { colorsForIdentity } from '@/features/tags/tagModel';
 import { ActiveEntryContent } from './ActiveEntryContent';
 import { ActiveEntryMenu } from './ActiveEntryMenu';
 import { DiagnosticIcon } from './DiagnosticIcon';
-import { DropIndicator } from './DropIndicator';
+import { RowDropIndicator } from './DropIndicator';
 import type { ActiveEntryRowProps } from './rowTypes';
 
 export const ActiveEntryRow = memo(function ActiveEntryRow({
@@ -20,26 +20,27 @@ export const ActiveEntryRow = memo(function ActiveEntryRow({
   tagDefs,
   modTags,
   selected,
-  dropIndicator,
   onContextOpen,
   onWarmFileInfo,
   onDoubleClick,
+  dropIndicatorStore,
   ...menuAndContentProps
 }: ActiveEntryRowProps) {
-  const sortable = useSortable({ id: entrySortableId(entry.id) });
+  const rowId = entrySortableId(entry.id);
+  const dragDrop = useDragDropNode(rowId);
   const diagnostics = diagnosticsForEntry(entry, diagnosticsByPackage);
   return (
     <ContextMenu onOpenChange={(open) => open && onContextOpen(entry)}>
       <ContextMenuTrigger asChild>
         <div
-          ref={sortable.setNodeRef}
+          ref={dragDrop.setNodeRef}
           onPointerEnter={() => warmEntryPreview(entry, onWarmFileInfo)}
           onDoubleClick={() => onDoubleClick(entry)}
-          className={rowClassName(selected, sortable.isDragging)}
-          {...sortable.attributes}
-          {...sortable.listeners}
+          className={rowClassName(selected, dragDrop.isDragging)}
+          {...dragDrop.attributes}
+          {...dragDrop.listeners}
         >
-          <DropIndicator edge={dropIndicator} />
+          <RowDropIndicator rowId={rowId} store={dropIndicatorStore} />
           {entry.kind === 'mod' && (
             <TagColorBar colors={colorsForIdentity(modTags, tagDefs, entry.identity)} />
           )}

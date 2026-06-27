@@ -1,4 +1,8 @@
 import { cn } from '@/lib/utils';
+import {
+  useDropIndicatorEdge,
+  type DropIndicatorStore,
+} from '@/features/order/hooks/dropIndicatorStore';
 
 export type DropIndicatorEdge = 'before' | 'inside' | 'after';
 
@@ -16,4 +20,17 @@ export function DropIndicator({ edge }: { edge?: DropIndicatorEdge }) {
       )}
     />
   );
+}
+
+export function RowDropIndicator({
+  rowId,
+  store,
+  allowInside,
+}: {
+  rowId: string;
+  store: DropIndicatorStore;
+  allowInside?: boolean;
+}) {
+  const edge = useDropIndicatorEdge(store, rowId, { allowInside });
+  return <DropIndicator edge={edge} />;
 }

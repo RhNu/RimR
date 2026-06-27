@@ -1,14 +1,14 @@
 import { memo } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { ModTypeIcon } from '@/components/mod/ModTypeIcon';
 import { cn } from '@/lib/utils';
 import { labelForIdentity } from '@/features/order/identity';
 import { childSortableId } from '@/features/order/dndIds';
+import { useDragDropNode } from '@/features/order/hooks/useDragDropNode';
 import { TagColorBar } from '@/features/tags/TagColorBar';
 import { colorsForIdentity } from '@/features/tags/tagModel';
 import { DiagnosticIcon } from './DiagnosticIcon';
-import { DropIndicator } from './DropIndicator';
+import { RowDropIndicator } from './DropIndicator';
 import { GroupChildMenu } from './GroupChildMenu';
 import type { GroupChildRowProps } from './rowTypes';
 
@@ -33,21 +33,22 @@ export const GroupChildRow = memo(function GroupChildRow({
   onDeleteTag,
   onReorderModTags,
   onRemove,
-  dropIndicator,
+  dropIndicatorStore,
 }: GroupChildRowProps) {
-  const sortable = useSortable({ id: childSortableId(groupId, child.id) });
+  const rowId = childSortableId(groupId, child.id);
+  const dragDrop = useDragDropNode(rowId);
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
-          ref={sortable.setNodeRef}
+          ref={dragDrop.setNodeRef}
           onPointerEnter={() => onWarmFileInfo(child.identity.sourceKey)}
           onDoubleClick={() => onDoubleClick(groupId, child.id)}
-          className={rowClassName(sortable.isDragging)}
-          {...sortable.attributes}
-          {...sortable.listeners}
+          className={rowClassName(dragDrop.isDragging)}
+          {...dragDrop.attributes}
+          {...dragDrop.listeners}
         >
-          <DropIndicator edge={dropIndicator} />
+          <RowDropIndicator rowId={rowId} store={dropIndicatorStore} allowInside={false} />
           <TagColorBar colors={colorsForIdentity(modTags, tagDefs, child.identity)} />
           <ModTypeIcon
             hasAssemblies={modByPackageId.get(child.identity.packageId)?.hasAssemblies ?? false}

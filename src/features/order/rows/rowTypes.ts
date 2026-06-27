@@ -11,6 +11,7 @@ import type {
   TagDefDto,
 } from '@/commands';
 import type { Selection } from '@/features/order/types';
+import type { DropIndicatorStore } from '@/features/order/hooks/dropIndicatorStore';
 
 export type WarmFileInfo = (sourceKey: string | null | undefined, immediate?: boolean) => void;
 
@@ -48,7 +49,7 @@ export type ActiveEntryRowProps = {
   onSetTagColor: (tagId: string, color: string | null) => void;
   onDeleteTag: (tagId: string) => void;
   onReorderModTags: (identity: ModIdentityDto, tagIds: string[]) => void;
-  dropIndicator?: 'before' | 'inside' | 'after';
+  dropIndicatorStore: DropIndicatorStore;
 };
 
 export type GroupChildRowProps = {
@@ -72,5 +73,5 @@ export type GroupChildRowProps = {
   onDeleteTag: (tagId: string) => void;
   onReorderModTags: (identity: ModIdentityDto, tagIds: string[]) => void;
   onRemove: (groupId: string, childId: string) => void;
-  dropIndicator?: 'before' | 'after';
+  dropIndicatorStore: DropIndicatorStore;
 };

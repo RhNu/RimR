@@ -8,4 +8,5 @@ export * from './normalize';
 export * from './reducer';
 export * from './selectors';
 export * from './syncFromGame';
+export * from './tagTargets';
 export * from './types';

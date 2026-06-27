@@ -11,14 +11,15 @@ import type {
 import { ContextMenuContent, ContextMenuItem } from '@/components/ui/context-menu';
 import { OpenModActionsMenuItems } from '@/features/order/OpenModActionsMenuItems';
 import { TagMenuItems } from '@/features/tags/TagMenuItems';
-import { tagIdsForIdentity } from '@/features/tags/tagModel';
+import { tagIdsForIdentities } from '@/features/tags/tagModel';
 import type { InactiveRenderRow } from '@/features/order/model';
 import { steamWorkshopSourceKey } from '@/lib/steamWorkshopLinks';
 
 type TagMenuProps = {
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  tagTargetIdentities?: ModIdentityDto[];
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;
@@ -37,6 +38,7 @@ export function InactiveEntryMenu({
   modByPackageId,
   tagDefs,
   modTags,
+  tagTargetIdentities,
   onToggleModTag,
   onCreateTag,
   onRenameTag,
@@ -76,6 +78,7 @@ export function InactiveEntryMenu({
           modByPackageId={modByPackageId}
           tagDefs={tagDefs}
           modTags={modTags}
+          tagTargetIdentities={tagTargetIdentities}
           onToggleModTag={onToggleModTag}
           onCreateTag={onCreateTag}
           onRenameTag={onRenameTag}
@@ -129,6 +132,7 @@ export function InactiveChildMenu({
         modByPackageId={modByPackageId}
         tagDefs={tagDefs}
         modTags={modTags}
+        tagTargetIdentities={[row.child.identity]}
         onToggleModTag={onToggleModTag}
         onCreateTag={onCreateTag}
         onRenameTag={onRenameTag}
@@ -149,6 +153,7 @@ function ModEntryMenuItems({
   modByPackageId,
   tagDefs,
   modTags,
+  tagTargetIdentities,
   onToggleModTag,
   onCreateTag,
   onRenameTag,
@@ -165,6 +170,7 @@ function ModEntryMenuItems({
 } & TagMenuProps) {
   const { t } = useTranslation();
   const workshopSourceKey = steamWorkshopSourceKey(identity, modByPackageId);
+  const targetIdentities = tagTargetIdentities?.length ? tagTargetIdentities : [identity];
   return (
     <>
       <OpenModActionsMenuItems
@@ -180,8 +186,8 @@ function ModEntryMenuItems({
       <TagMenuItems
         identity={identity}
         tagDefs={tagDefs}
-        boundTagIds={tagIdsForIdentity(modTags, identity)}
-        onToggleTag={(tagId) => onToggleModTag(identity, tagId)}
+        boundTagIds={tagIdsForIdentities(modTags, targetIdentities)}
+        onToggleTag={(tagId) => onToggleModTag(targetIdentities, tagId)}
         onCreateTag={onCreateTag}
         onRenameTag={onRenameTag}
         onSetTagColor={onSetTagColor}

@@ -22,6 +22,7 @@ export type ActiveEntryRowProps = {
   diagnosticsByPackage: Map<string, DiagnosticDto[]>;
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
+  tagTargetIdentities: ModIdentityDto[];
   selected: boolean;
   canCreateGroup: boolean;
   onSelect: (
@@ -41,7 +42,7 @@ export type ActiveEntryRowProps = {
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
   onWarmFileInfo: WarmFileInfo;
   onDoubleClick: (entry: ModListEntryDto) => void;
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;
@@ -64,7 +65,7 @@ export type GroupChildRowProps = {
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;

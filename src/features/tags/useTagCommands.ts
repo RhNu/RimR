@@ -14,6 +14,7 @@ import {
   renameTagDef,
   reorderModTags,
   setTagDefColor,
+  toggleModTagForIdentities,
   toggleModTag,
   upsertModTags,
   upsertTagDef,
@@ -79,6 +80,12 @@ export function useTagCommands({
     commit(library.settings.tagDefs ?? [], modTags);
   }
 
+  function handleToggleModTags(identities: ModIdentityDto[], tagId: string): void {
+    if (!library) return;
+    const modTags = toggleModTagForIdentities(library.settings.modTags ?? [], identities, tagId);
+    commit(library.settings.tagDefs ?? [], modTags);
+  }
+
   function handleSetModTags(identity: ModIdentityDto, tagIds: string[]): void {
     if (!library) return;
     const modTags = upsertModTags(library.settings.modTags ?? [], identity, tagIds);
@@ -97,6 +104,7 @@ export function useTagCommands({
     handleSetTagColor,
     handleDeleteTag,
     handleToggleModTag,
+    handleToggleModTags,
     handleSetModTags,
     handleReorderModTags,
     saveSettings,

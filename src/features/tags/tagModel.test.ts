@@ -9,7 +9,9 @@ import {
   renameTagDef,
   reorderModTags,
   setTagDefColor,
+  tagIdsForIdentities,
   tagIdsForIdentity,
+  toggleModTagForIdentities,
   toggleModTag,
   upsertModTags,
   upsertTagDef,
@@ -53,6 +55,24 @@ describe('tagIdsForIdentity', () => {
 
   it('returns an empty array when there is no binding', () => {
     expect(tagIdsForIdentity([], ident('a.mod'))).toEqual([]);
+  });
+});
+
+describe('tagIdsForIdentities', () => {
+  it('returns only tags shared by all identities in first identity order', () => {
+    const a = ident('a.mod');
+    const b = ident('b.mod');
+    const bindings = [binding(a, ['t2', 't1', 't3']), binding(b, ['t3', 't2'])];
+    expect(tagIdsForIdentities(bindings, [a, b])).toEqual(['t2', 't3']);
+  });
+
+  it('deduplicates identities before computing shared tags', () => {
+    const a = ident('a.mod');
+    expect(tagIdsForIdentities([binding(a, ['t1'])], [a, a])).toEqual(['t1']);
+  });
+
+  it('returns an empty array when there are no identities', () => {
+    expect(tagIdsForIdentities([binding(ident('a.mod'), ['t1'])], [])).toEqual([]);
   });
 });
 
@@ -119,6 +139,42 @@ describe('toggleModTag', () => {
   it('deletes the binding when the removed tag was the only one', () => {
     const a = ident('a.mod');
     expect(toggleModTag([binding(a, ['t1'])], a, 't1')).toEqual([]);
+  });
+});
+
+describe('toggleModTagForIdentities', () => {
+  it('adds the tag to every selected identity when the selection is mixed', () => {
+    const a = ident('a.mod');
+    const b = ident('b.mod');
+    const result = toggleModTagForIdentities([binding(a, ['t1'])], [a, b], 't1');
+    expect(result).toEqual([binding(a, ['t1']), binding(b, ['t1'])]);
+  });
+
+  it('removes the tag from every selected identity when all selected identities have it', () => {
+    const a = ident('a.mod');
+    const b = ident('b.mod');
+    const result = toggleModTagForIdentities(
+      [binding(a, ['t1', 't2']), binding(b, ['t1'])],
+      [a, b],
+      't1',
+    );
+    expect(result).toEqual([binding(a, ['t2'])]);
+  });
+
+  it('adds the tag without duplicating it on identities that already have it', () => {
+    const a = ident('a.mod');
+    const b = ident('b.mod');
+    const result = toggleModTagForIdentities(
+      [binding(a, ['t1']), binding(b, ['t2'])],
+      [a, b],
+      't1',
+    );
+    expect(result).toEqual([binding(a, ['t1']), binding(b, ['t2', 't1'])]);
+  });
+
+  it('leaves bindings unchanged when there are no identities', () => {
+    const bindings = [binding(ident('a.mod'), ['t1'])];
+    expect(toggleModTagForIdentities(bindings, [], 't1')).toBe(bindings);
   });
 });
 

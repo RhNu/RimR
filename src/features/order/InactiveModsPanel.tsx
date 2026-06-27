@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   DisplayAliasDto,
@@ -14,9 +14,15 @@ import { DroppablePanel } from '@/features/order/Panels';
 import { InactiveModRow } from '@/features/order/Rows';
 import { InactivePanelActions } from '@/features/order/InactivePanelActions';
 import { InactiveChildRow, InactiveEntryRow } from '@/features/order/InactiveStructuredRows';
-import { canCreateInactiveGroup } from '@/features/order/model';
+import {
+  canCreateInactiveGroup,
+  selectedActiveModIdentities,
+  selectedInactiveModIdentities,
+  tagTargetsForEntry,
+  tagTargetsForIdentity,
+} from '@/features/order/model';
 import type { InactiveRenderRow } from '@/features/order/model';
-import { displayName } from '@/features/order/identity';
+import { displayName, identityForMod } from '@/features/order/identity';
 import type { Selection } from '@/features/order/types';
 import { INACTIVE_DROP_ID } from './workspaceConstants';
 import {
@@ -55,7 +61,7 @@ type RowProps = {
   onEditActiveAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;
@@ -77,6 +83,7 @@ export function InactiveModsPanel() {
   const aliases = library.data?.settings.aliases ?? [];
   const tagDefs = library.data?.settings.tagDefs ?? [];
   const modTags = library.data?.settings.modTags ?? [];
+  const tagTargets = useInactiveTagTargets(derived, selection);
   const rowProps: RowProps = {
     aliases,
     tagDefs,
@@ -98,7 +105,7 @@ export function InactiveModsPanel() {
     onEditActiveAlias: editActions.editActiveAlias,
     onOpenModFolder: open.handleOpenModFolder,
     onOpenSteamWorkshopPage: open.handleOpenSteamWorkshopPage,
-    onToggleModTag: tagCommands.handleToggleModTag,
+    onToggleModTag: tagCommands.handleToggleModTags,
     onCreateTag: tagCommands.handleCreateTag,
     onRenameTag: tagCommands.handleRenameTag,
     onSetTagColor: tagCommands.handleSetTagColor,
@@ -111,81 +118,130 @@ export function InactiveModsPanel() {
       id={INACTIVE_DROP_ID}
       title={t('order.unintroducedTitle')}
       count={derived.inactiveRows.length}
-      actions={
-        <InactivePanelActions
-          search={filters.inactiveSearch}
-          sortKey={filters.availableSortKey}
-          sortDirection={filters.availableSortDirection}
-          onSearchChange={filters.setInactiveSearch}
-          onSortKeyChange={filters.setAvailableSortKey}
-          onToggleSortDirection={filters.toggleAvailableSortDirection}
-          tagFilter={filters.inactiveTagFilter}
-          onTagFilterChange={filters.setInactiveTagFilter}
-          tagDefs={tagDefs}
-        />
-      }
+      actions={<InactivePanelToolbar filters={filters} tagDefs={tagDefs} />}
     >
       {derived.inactiveRows.map((row) => (
-        <InactivePanelRow key={row.id} row={row} {...rowProps} />
+        <InactivePanelRow
+          key={row.id}
+          row={row}
+          selectedInactiveTagIdentities={tagTargets.inactive}
+          selectedActiveTagIdentities={tagTargets.active}
+          {...rowProps}
+        />
       ))}
     </DroppablePanel>
   );
 }
 
-function InactivePanelRow({ row, ...props }: RowProps & { row: InactiveRenderRow }) {
+type InactivePanelRowProps = RowProps & {
+  row: InactiveRenderRow;
+  selectedInactiveTagIdentities: ModIdentityDto[];
+  selectedActiveTagIdentities: ModIdentityDto[];
+};
+
+function InactivePanelToolbar({
+  filters,
+  tagDefs,
+}: {
+  filters: ReturnType<typeof useOrderWorkspaceFilters>;
+  tagDefs: TagDefDto[];
+}) {
+  return (
+    <InactivePanelActions
+      search={filters.inactiveSearch}
+      sortKey={filters.availableSortKey}
+      sortDirection={filters.availableSortDirection}
+      onSearchChange={filters.setInactiveSearch}
+      onSortKeyChange={filters.setAvailableSortKey}
+      onToggleSortDirection={filters.toggleAvailableSortDirection}
+      tagFilter={filters.inactiveTagFilter}
+      onTagFilterChange={filters.setInactiveTagFilter}
+      tagDefs={tagDefs}
+    />
+  );
+}
+
+function InactivePanelRow(props: InactivePanelRowProps) {
+  const { row } = props;
   if (row.kind === 'catalog') {
-    return (
-      <InactiveModRow
-        mod={row.mod}
-        label={displayName(row.mod, props.aliases)}
-        tagDefs={props.tagDefs}
-        modTags={props.modTags}
-        selected={props.selectedPackageIds.has(row.mod.packageId)}
-        canCreateGroup={canCreateInactiveGroup(props.selectedPackageIds)}
-        onWarmFileInfo={props.onWarmFileInfo}
-        onSelect={props.onSelect}
-        onContextOpen={props.onContextOpen}
-        onAdd={props.onAdd}
-        onDoubleClick={props.onDoubleClick}
-        onCreateGroup={props.onCreateGroup}
-        onEditAlias={props.onEditAlias}
-        onOpenModFolder={props.onOpenModFolder}
-        onOpenSteamWorkshopPage={props.onOpenSteamWorkshopPage}
-        onToggleModTag={props.onToggleModTag}
-        onCreateTag={props.onCreateTag}
-        onRenameTag={props.onRenameTag}
-        onSetTagColor={props.onSetTagColor}
-        onDeleteTag={props.onDeleteTag}
-        onReorderModTags={props.onReorderModTags}
-      />
-    );
+    return <CatalogInactivePanelRow {...props} row={row} />;
   }
   if (row.kind === 'entry') {
-    return (
-      <InactiveEntryRow
-        row={row}
-        aliases={props.aliases}
-        tagDefs={props.tagDefs}
-        modTags={props.modTags}
-        modByPackageId={props.modByPackageId}
-        onWarmFileInfo={props.onWarmFileInfo}
-        onSelect={props.onSelectEntry}
-        onContextOpen={props.onContextOpenEntry}
-        onRenameGroup={props.onRenameGroup}
-        onAddActive={props.onActivateEntry}
-        onDoubleClick={props.onActivateEntry}
-        onEditAlias={props.onEditActiveAlias}
-        onOpenModFolder={props.onOpenModFolder}
-        onOpenSteamWorkshopPage={props.onOpenSteamWorkshopPage}
-        onToggleModTag={props.onToggleModTag}
-        onCreateTag={props.onCreateTag}
-        onRenameTag={props.onRenameTag}
-        onSetTagColor={props.onSetTagColor}
-        onDeleteTag={props.onDeleteTag}
-        onReorderModTags={props.onReorderModTags}
-      />
-    );
+    return <StructuredInactiveEntryPanelRow {...props} row={row} />;
   }
+  return <StructuredInactiveChildPanelRow {...props} row={row} />;
+}
+
+function CatalogInactivePanelRow({
+  row,
+  selectedInactiveTagIdentities,
+  ...props
+}: InactivePanelRowProps & { row: Extract<InactiveRenderRow, { kind: 'catalog' }> }) {
+  const identity = identityForMod(row.mod);
+  return (
+    <InactiveModRow
+      mod={row.mod}
+      label={displayName(row.mod, props.aliases)}
+      tagDefs={props.tagDefs}
+      modTags={props.modTags}
+      tagTargetIdentities={tagTargetsForIdentity(identity, selectedInactiveTagIdentities)}
+      selected={props.selectedPackageIds.has(row.mod.packageId)}
+      canCreateGroup={canCreateInactiveGroup(props.selectedPackageIds)}
+      onWarmFileInfo={props.onWarmFileInfo}
+      onSelect={props.onSelect}
+      onContextOpen={props.onContextOpen}
+      onAdd={props.onAdd}
+      onDoubleClick={props.onDoubleClick}
+      onCreateGroup={props.onCreateGroup}
+      onEditAlias={props.onEditAlias}
+      onOpenModFolder={props.onOpenModFolder}
+      onOpenSteamWorkshopPage={props.onOpenSteamWorkshopPage}
+      onToggleModTag={props.onToggleModTag}
+      onCreateTag={props.onCreateTag}
+      onRenameTag={props.onRenameTag}
+      onSetTagColor={props.onSetTagColor}
+      onDeleteTag={props.onDeleteTag}
+      onReorderModTags={props.onReorderModTags}
+    />
+  );
+}
+
+function StructuredInactiveEntryPanelRow({
+  row,
+  selectedActiveTagIdentities,
+  ...props
+}: InactivePanelRowProps & { row: Extract<InactiveRenderRow, { kind: 'entry' }> }) {
+  return (
+    <InactiveEntryRow
+      row={row}
+      aliases={props.aliases}
+      tagDefs={props.tagDefs}
+      modTags={props.modTags}
+      tagTargetIdentities={tagTargetsForEntry(row.entry, selectedActiveTagIdentities)}
+      modByPackageId={props.modByPackageId}
+      onWarmFileInfo={props.onWarmFileInfo}
+      onSelect={props.onSelectEntry}
+      onContextOpen={props.onContextOpenEntry}
+      onRenameGroup={props.onRenameGroup}
+      onAddActive={props.onActivateEntry}
+      onDoubleClick={props.onActivateEntry}
+      onEditAlias={props.onEditActiveAlias}
+      onOpenModFolder={props.onOpenModFolder}
+      onOpenSteamWorkshopPage={props.onOpenSteamWorkshopPage}
+      onToggleModTag={props.onToggleModTag}
+      onCreateTag={props.onCreateTag}
+      onRenameTag={props.onRenameTag}
+      onSetTagColor={props.onSetTagColor}
+      onDeleteTag={props.onDeleteTag}
+      onReorderModTags={props.onReorderModTags}
+    />
+  );
+}
+
+function StructuredInactiveChildPanelRow({
+  row,
+  ...props
+}: InactivePanelRowProps & { row: Extract<InactiveRenderRow, { kind: 'child' }> }) {
   return (
     <InactiveChildRow
       row={row}
@@ -208,4 +264,23 @@ function InactivePanelRow({ row, ...props }: RowProps & { row: InactiveRenderRow
       onReorderModTags={props.onReorderModTags}
     />
   );
+}
+
+function useInactiveTagTargets(
+  derived: ReturnType<typeof useOrderWorkspaceDerived>,
+  selection: ReturnType<typeof useOrderWorkspaceSelection>,
+): { inactive: ModIdentityDto[]; active: ModIdentityDto[] } {
+  const inactive = useMemo(
+    () =>
+      selectedInactiveModIdentities(
+        derived.sortedInactiveMods,
+        selection.selectedInactivePackageIds,
+      ),
+    [derived.sortedInactiveMods, selection.selectedInactivePackageIds],
+  );
+  const active = useMemo(
+    () => selectedActiveModIdentities(derived.activeRows, selection.selectedEntryIds),
+    [derived.activeRows, selection.selectedEntryIds],
+  );
+  return { inactive, active };
 }

@@ -21,7 +21,7 @@ import { ModTypeIcon } from '@/components/mod/ModTypeIcon';
 import { OpenModActionsMenuItems } from '@/features/order/OpenModActionsMenuItems';
 import { TagColorBar } from '@/features/tags/TagColorBar';
 import { TagMenuItems } from '@/features/tags/TagMenuItems';
-import { colorsForIdentity, tagIdsForIdentity } from '@/features/tags/tagModel';
+import { colorsForIdentity, tagIdsForIdentities } from '@/features/tags/tagModel';
 import { identityForMod } from '@/features/order/identity';
 import type { WarmFileInfo } from './rowTypes';
 
@@ -30,6 +30,7 @@ type InactiveModRowProps = {
   label: string;
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
+  tagTargetIdentities: ModIdentityDto[];
   selected: boolean;
   onSelect: (mod: ModMetadataDto, event: MouseEvent<HTMLButtonElement>) => void;
   onContextOpen: (mod: ModMetadataDto) => void;
@@ -39,7 +40,7 @@ type InactiveModRowProps = {
   onEditAlias: (mod: ModMetadataDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;
@@ -54,6 +55,7 @@ export const InactiveModRow = memo(function InactiveModRow({
   label,
   tagDefs,
   modTags,
+  tagTargetIdentities,
   selected,
   onSelect,
   onContextOpen,
@@ -103,6 +105,7 @@ export const InactiveModRow = memo(function InactiveModRow({
         mod={mod}
         tagDefs={tagDefs}
         modTags={modTags}
+        tagTargetIdentities={tagTargetIdentities}
         canCreateGroup={canCreateGroup}
         onAdd={onAdd}
         onCreateGroup={onCreateGroup}
@@ -124,6 +127,7 @@ function InactiveModContextMenu({
   mod,
   tagDefs,
   modTags,
+  tagTargetIdentities,
   canCreateGroup,
   onAdd,
   onCreateGroup,
@@ -141,6 +145,7 @@ function InactiveModContextMenu({
   | 'mod'
   | 'tagDefs'
   | 'modTags'
+  | 'tagTargetIdentities'
   | 'canCreateGroup'
   | 'onAdd'
   | 'onCreateGroup'
@@ -156,6 +161,7 @@ function InactiveModContextMenu({
 >) {
   const { t } = useTranslation();
   const identity = identityForMod(mod);
+  const targetIdentities = tagTargetIdentities.length > 0 ? tagTargetIdentities : [identity];
   return (
     <ContextMenuContent>
       <ContextMenuItem onSelect={() => onAdd(mod)}>
@@ -179,8 +185,8 @@ function InactiveModContextMenu({
       <TagMenuItems
         identity={identity}
         tagDefs={tagDefs}
-        boundTagIds={tagIdsForIdentity(modTags, identity)}
-        onToggleTag={(tagId) => onToggleModTag(identity, tagId)}
+        boundTagIds={tagIdsForIdentities(modTags, targetIdentities)}
+        onToggleTag={(tagId) => onToggleModTag(targetIdentities, tagId)}
         onCreateTag={onCreateTag}
         onRenameTag={onRenameTag}
         onSetTagColor={onSetTagColor}

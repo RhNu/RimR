@@ -15,6 +15,19 @@ export function tagIdsForIdentity(
   return findBinding(bindings, identity)?.tagIds ?? [];
 }
 
+export function tagIdsForIdentities(
+  bindings: ModTagBindingDto[],
+  identities: ModIdentityDto[],
+): string[] {
+  const [first, ...rest] = uniqueIdentities(identities);
+  if (!first) return [];
+  const firstIds = tagIdsForIdentity(bindings, first);
+  if (rest.length === 0) return firstIds;
+  return firstIds.filter((id) =>
+    rest.every((identity) => tagIdsForIdentity(bindings, identity).includes(id)),
+  );
+}
+
 export function colorsForIdentity(
   bindings: ModTagBindingDto[],
   defs: TagDefDto[],
@@ -47,6 +60,25 @@ export function toggleModTag(
     ? current.filter((tid) => tid !== tagId)
     : [...current, tagId];
   return upsertModTags(bindings, identity, nextIds);
+}
+
+export function toggleModTagForIdentities(
+  bindings: ModTagBindingDto[],
+  identities: ModIdentityDto[],
+  tagId: string,
+): ModTagBindingDto[] {
+  const targets = uniqueIdentities(identities);
+  if (targets.length === 0) return bindings;
+  const remove = targets.every((identity) => tagIdsForIdentity(bindings, identity).includes(tagId));
+  return targets.reduce((nextBindings, identity) => {
+    const current = tagIdsForIdentity(nextBindings, identity);
+    const nextIds = remove
+      ? current.filter((tid) => tid !== tagId)
+      : current.includes(tagId)
+        ? current
+        : [...current, tagId];
+    return upsertModTags(nextBindings, identity, nextIds);
+  }, bindings);
 }
 
 export function reorderModTags(
@@ -93,4 +125,11 @@ export function createTagDef(name: string, color: string | null): TagDefDto {
 
 export function defById(defs: TagDefDto[], id: string): TagDefDto | undefined {
   return defs.find((d) => d.id === id);
+}
+
+function uniqueIdentities(identities: ModIdentityDto[]): ModIdentityDto[] {
+  return identities.filter(
+    (identity, index) =>
+      identities.findIndex((candidate) => identityMatches(candidate, identity)) === index,
+  );
 }

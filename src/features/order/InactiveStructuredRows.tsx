@@ -25,7 +25,8 @@ import { cn } from '@/lib/utils';
 type TagRowProps = {
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  tagTargetIdentities?: ModIdentityDto[];
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;
@@ -57,6 +58,7 @@ export function InactiveEntryRow({
   aliases,
   tagDefs,
   modTags,
+  tagTargetIdentities,
   modByPackageId,
   onWarmFileInfo,
   onSelect,
@@ -117,6 +119,7 @@ export function InactiveEntryRow({
         modByPackageId={modByPackageId}
         tagDefs={tagDefs}
         modTags={modTags}
+        tagTargetIdentities={tagTargetIdentities}
         onToggleModTag={onToggleModTag}
         onCreateTag={onCreateTag}
         onRenameTag={onRenameTag}

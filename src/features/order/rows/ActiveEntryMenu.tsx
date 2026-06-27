@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/context-menu';
 import { OpenModActionsMenuItems } from '@/features/order/OpenModActionsMenuItems';
 import { TagMenuItems } from '@/features/tags/TagMenuItems';
-import { tagIdsForIdentity } from '@/features/tags/tagModel';
+import { tagIdsForIdentities } from '@/features/tags/tagModel';
 import { steamWorkshopSourceKey } from '@/lib/steamWorkshopLinks';
 import type { ActiveEntryRowProps } from './rowTypes';
 
@@ -27,6 +27,7 @@ type ActiveEntryMenuProps = Pick<
   | 'modByPackageId'
   | 'tagDefs'
   | 'modTags'
+  | 'tagTargetIdentities'
   | 'onToggleModTag'
   | 'onCreateTag'
   | 'onRenameTag'
@@ -72,6 +73,7 @@ function ModEntryActions({
   modByPackageId,
   tagDefs,
   modTags,
+  tagTargetIdentities,
   onToggleModTag,
   onCreateTag,
   onRenameTag,
@@ -83,6 +85,7 @@ function ModEntryActions({
   if (entry.kind !== 'mod') return null;
   const sourceKey = entry.identity.sourceKey;
   const workshopSourceKey = steamWorkshopSourceKey(entry.identity, modByPackageId);
+  const targetIdentities = tagTargetIdentities.length > 0 ? tagTargetIdentities : [entry.identity];
   return (
     <>
       <ContextMenuItem onSelect={() => onRemove(entry.id)} variant="destructive">
@@ -100,8 +103,8 @@ function ModEntryActions({
       <TagMenuItems
         identity={entry.identity}
         tagDefs={tagDefs}
-        boundTagIds={tagIdsForIdentity(modTags, entry.identity)}
-        onToggleTag={(tagId) => onToggleModTag(entry.identity, tagId)}
+        boundTagIds={tagIdsForIdentities(modTags, targetIdentities)}
+        onToggleTag={(tagId) => onToggleModTag(targetIdentities, tagId)}
         onCreateTag={onCreateTag}
         onRenameTag={onRenameTag}
         onSetTagColor={onSetTagColor}

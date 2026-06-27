@@ -17,7 +17,11 @@ import { DroppablePanel } from '@/features/order/Panels';
 import { ActiveEntryRow, GroupChildRow } from '@/features/order/Rows';
 import type { Selection } from '@/features/order/types';
 import type { ActiveRenderRow } from '@/features/order/model';
-import { canCreateActiveGroup } from '@/features/order/model';
+import {
+  canCreateActiveGroup,
+  selectedActiveModIdentities,
+  tagTargetsForEntry,
+} from '@/features/order/model';
 import { ACTIVE_DROP_ID } from './workspaceConstants';
 import {
   useOrderWorkspaceData,
@@ -62,7 +66,7 @@ type ActiveRowsProps = {
   onRemoveChild: (groupId: string, childId: string) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
-  onToggleModTag: (identity: ModIdentityDto, tagId: string) => void;
+  onToggleModTag: (identities: ModIdentityDto[], tagId: string) => void;
   onCreateTag: (name: string, color: string | null) => void;
   onRenameTag: (tagId: string, name: string) => void;
   onSetTagColor: (tagId: string, color: string | null) => void;
@@ -109,7 +113,7 @@ export function ActiveModsPanel() {
     onRemoveChild: editActions.removeGroupChild,
     onOpenModFolder: open.handleOpenModFolder,
     onOpenSteamWorkshopPage: open.handleOpenSteamWorkshopPage,
-    onToggleModTag: tagCommands.handleToggleModTag,
+    onToggleModTag: tagCommands.handleToggleModTags,
     onCreateTag: tagCommands.handleCreateTag,
     onRenameTag: tagCommands.handleRenameTag,
     onSetTagColor: tagCommands.handleSetTagColor,
@@ -138,6 +142,10 @@ export function ActiveModsPanel() {
 
 function ActiveRows(props: ActiveRowsProps) {
   const sortableItems = useMemo(() => props.rows.map((row) => row.id), [props.rows]);
+  const selectedTagIdentities = useMemo(
+    () => selectedActiveModIdentities(props.rows, props.selectedEntryIds),
+    [props.rows, props.selectedEntryIds],
+  );
   return (
     <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
       {props.rows.map((row, index) =>
@@ -149,6 +157,7 @@ function ActiveRows(props: ActiveRowsProps) {
             aliases={props.aliases}
             tagDefs={props.tagDefs}
             modTags={props.modTags}
+            tagTargetIdentities={tagTargetsForEntry(row.entry, selectedTagIdentities)}
             modByPackageId={props.modByPackageId}
             diagnosticsByPackage={props.diagnosticsByPackage}
             selected={row.entry.kind === 'mod' && props.selectedEntryIds.has(row.entry.id)}

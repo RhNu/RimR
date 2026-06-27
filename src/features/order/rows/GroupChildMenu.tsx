@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/context-menu';
 import { OpenModActionsMenuItems } from '@/features/order/OpenModActionsMenuItems';
 import { TagMenuItems } from '@/features/tags/TagMenuItems';
-import { tagIdsForIdentity } from '@/features/tags/tagModel';
+import { tagIdsForIdentities } from '@/features/tags/tagModel';
 import { steamWorkshopSourceKey } from '@/lib/steamWorkshopLinks';
 import type { GroupChildRowProps } from './rowTypes';
 
@@ -64,8 +64,8 @@ export function GroupChildMenu({
       <TagMenuItems
         identity={identity}
         tagDefs={tagDefs}
-        boundTagIds={tagIdsForIdentity(modTags, identity)}
-        onToggleTag={(tagId) => onToggleModTag(identity, tagId)}
+        boundTagIds={tagIdsForIdentities(modTags, [identity])}
+        onToggleTag={(tagId) => onToggleModTag([identity], tagId)}
         onCreateTag={onCreateTag}
         onRenameTag={onRenameTag}
         onSetTagColor={onSetTagColor}

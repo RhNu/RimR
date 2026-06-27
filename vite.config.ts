@@ -8,13 +8,11 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-
   clearScreen: false,
   server: {
     port: 5173,
@@ -22,13 +20,23 @@ export default defineConfig({
     host: host || false,
     hmr: host
       ? {
-          protocol: 'ws',
-          host,
-          port: 5174,
-        }
+        protocol: 'ws',
+        host,
+        port: 5174,
+      }
       : undefined,
     watch: {
       ignored: ['**/src-tauri/**', '**/crates/**'],
     },
+  },
+  envPrefix: ['VITE_', 'TAURI_ENV_*'],
+  build: {
+    target:
+      process.env.TAURI_ENV_PLATFORM == 'windows'
+        ? 'chrome105'
+        : 'safari13',
+    minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
+    sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    chunkSizeWarningLimit: 1000,
   },
 });

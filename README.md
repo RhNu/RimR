@@ -43,7 +43,9 @@ Examples:
 
 ## Download
 
-Prebuilt installers are available on the [Releases](https://github.com/RhNu/RimR/releases) page.
+Prebuilt release archives are available on the [Releases](https://github.com/RhNu/RimR/releases) page.
+
+Windows is the primary supported release target. Linux and macOS builds are experimental; the macOS archive currently targets Apple Silicon and is unsigned.
 
 ## Development
 

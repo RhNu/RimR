@@ -12,36 +12,59 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Release Windows Portable
-    runs-on: windows-latest
+  build-release:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x86_64 portable
+            platform: windows
+            runner: windows-latest
+          - name: Linux x86_64 portable
+            platform: linux
+            runner: ubuntu-22.04
+          - name: macOS arm64 app
+            platform: macos
+            runner: macos-15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf zip
+
       - name: Setup toolchain
         uses: ./.github/actions/setup-toolchain
         with:
-          cache-shared-key: release
+          cache-shared-key: release-${{ matrix.platform }}
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Verify version matches tag
-        shell: pwsh
         run: |
-          $pkgVer = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $tagVer = "${{ github.ref_name }}" -replace "^v", ""
-          if ($pkgVer -ne $tagVer) {
-            throw "package.json version ($pkgVer) does not match tag version ($tagVer)"
-          }
-          Write-Host "Version OK: $pkgVer"
+          node -e 'const fs = require("fs"); const pkgVer = JSON.parse(fs.readFileSync("package.json", "utf8")).version; const tagVer = process.env.GITHUB_REF_NAME.replace(/^v/, ""); if (pkgVer !== tagVer) { throw new Error(`package.json version (${pkgVer}) does not match tag version (${tagVer})`); } console.log(`Version OK: ${pkgVer}`);'
 
-      - name: Build portable binary
+      - name: Build Windows portable binary
+        if: matrix.platform == 'windows'
         run: pnpm tauri build --no-bundle
 
-      - name: Stage portable artifact
+      - name: Build Linux portable binary
+        if: matrix.platform == 'linux'
+        run: pnpm tauri build --no-bundle
+
+      - name: Build macOS app bundle
+        if: matrix.platform == 'macos'
+        run: pnpm tauri build --bundles app --target aarch64-apple-darwin --no-sign
+
+      - name: Stage Windows portable artifact
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".Substring(1)
@@ -56,6 +79,70 @@ jobs:
           Set-Content -Path "$zip.sha256" -Value "$hash  $staging.zip"
           Write-Host "Created $zip"
           Write-Host "SHA256: $hash"
+
+      - name: Stage Linux portable artifact
+        if: matrix.platform == 'linux'
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          staging="RimR-${version}-linux-x86_64-portable"
+          stage_dir="dist-release/${staging}"
+          mkdir -p "${stage_dir}"
+          cp "target/release/RimR" "${stage_dir}/"
+          cp "LICENSE" "${stage_dir}/"
+          (
+            cd dist-release
+            zip -r "${staging}.zip" "${staging}"
+            sha256sum "${staging}.zip" > "${staging}.zip.sha256"
+          )
+          echo "Created dist-release/${staging}.zip"
+
+      - name: Stage macOS app artifact
+        if: matrix.platform == 'macos'
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          staging="RimR-${version}-macos-arm64-app"
+          stage_dir="dist-release/${staging}"
+          app_path="target/aarch64-apple-darwin/release/bundle/macos/RimR.app"
+          if [ ! -d "${app_path}" ]; then
+            echo "Missing app bundle: ${app_path}" >&2
+            exit 1
+          fi
+          mkdir -p "${stage_dir}"
+          ditto "${app_path}" "${stage_dir}/RimR.app"
+          cp "LICENSE" "${stage_dir}/"
+          (
+            cd dist-release
+            ditto -c -k --sequesterRsrc --keepParent "${staging}" "${staging}.zip"
+            shasum -a 256 "${staging}.zip" | awk -v file="${staging}.zip" '{print $1 "  " file}' > "${staging}.zip.sha256"
+          )
+          echo "Created dist-release/${staging}.zip"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.platform }}
+          path: |
+            dist-release/*.zip
+            dist-release/*.sha256
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    needs: build-release
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: dist-release
+          merge-multiple: true
+
+      - name: List release artifacts
+        run: ls -la dist-release
 
       - name: Publish release
         uses: softprops/action-gh-release@v3

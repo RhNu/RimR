@@ -12,7 +12,14 @@ export type OrderDialog =
   | { kind: 'renameModList'; value: string }
   | { kind: 'saveAsModList'; value: string }
   | { kind: 'deleteModList' }
-  | { kind: 'editAlias'; identity: ModIdentityDto; value: string; originalValue: string }
+  | {
+      kind: 'editAlias';
+      identity: ModIdentityDto;
+      value: string;
+      baseValue: string;
+      initialValue: string;
+      hadAlias: boolean;
+    }
   | { kind: 'createActiveGroup'; value: string }
   | { kind: 'createInactiveGroup'; value: string }
   | { kind: 'renameGroup'; entryId: string; value: string }

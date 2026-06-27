@@ -24,7 +24,13 @@ export function submitOrderDialog(
   const trimmed = value.trim();
   switch (dialog.kind) {
     case 'editAlias':
-      if (trimmed !== dialog.originalValue.trim()) {
+      if (!trimmed) {
+        if (dialog.hadAlias) {
+          actions.onSaveAlias(dialog.identity, '');
+        }
+        break;
+      }
+      if (trimmed !== dialog.initialValue.trim()) {
         actions.onSaveAlias(dialog.identity, value);
       }
       break;

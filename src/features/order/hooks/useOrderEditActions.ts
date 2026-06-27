@@ -1,7 +1,16 @@
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ModIdentityDto, ModListDto, ModListEntryDto, ModMetadataDto } from '@/commands';
-import { baseDisplayName, baseLabelForIdentity, identityForMod } from '@/features/order/identity';
+import type {
+  DisplayAliasDto,
+  ModIdentityDto,
+  ModListDto,
+  ModListEntryDto,
+  ModMetadataDto,
+} from '@/commands';
+import {
+  useEditActiveAlias,
+  useEditInactiveAlias,
+} from '@/features/order/hooks/useAliasDialogActions';
 import {
   canCreateActiveGroup,
   canCreateInactiveGroup,
@@ -22,6 +31,7 @@ type UseOrderEditActionsParams = {
   selectedInactivePackageIds: Set<string>;
   sortedInactiveMods: ModMetadataDto[];
   modByPackageId: Map<string, ModMetadataDto>;
+  aliases: DisplayAliasDto[];
   applyDraft: (action: ModListAction) => void;
   resetSelections: () => void;
   onSaveAlias: (identity: ModIdentityDto, displayAlias: string) => void;
@@ -39,6 +49,7 @@ export function useOrderEditActions({
   selectedInactivePackageIds,
   sortedInactiveMods,
   modByPackageId,
+  aliases,
   applyDraft,
   resetSelections,
   onSaveAlias,
@@ -55,6 +66,7 @@ export function useOrderEditActions({
     setDialog,
     applyDraft,
     modByPackageId,
+    aliases,
   });
 
   function handleDialogSubmit(value: string): void {
@@ -121,11 +133,13 @@ function useDialogOpenActions({
   setDialog,
   applyDraft,
   modByPackageId,
+  aliases,
 }: {
   draftRef: MutableRefObject<ModListDto | null>;
   setDialog: (dialog: OrderDialog) => void;
   applyDraft: (action: ModListAction) => void;
   modByPackageId: Map<string, ModMetadataDto>;
+  aliases: DisplayAliasDto[];
 }) {
   const { t } = useTranslation();
   return {
@@ -135,7 +149,7 @@ function useDialogOpenActions({
     createInactiveGroupDialog: useCallback(() => {
       setDialog({ kind: 'createInactiveGroup', value: t('order.groupDefault') });
     }, [setDialog, t]),
-    editInactiveAlias: useEditInactiveAlias(setDialog),
+    editInactiveAlias: useEditInactiveAlias(aliases, setDialog),
     removeActiveEntry: useRemoveEntry(draftRef, applyDraft),
     handleActiveDoubleClick: useCallback(
       (entry: ModListEntryDto) => {
@@ -152,7 +166,7 @@ function useDialogOpenActions({
     createActiveGroupDialog: useCallback(() => {
       setDialog({ kind: 'createActiveGroup', value: t('order.groupDefault') });
     }, [setDialog, t]),
-    editActiveAlias: useEditActiveAlias(modByPackageId, setDialog),
+    editActiveAlias: useEditActiveAlias(modByPackageId, aliases, setDialog),
     addSeparatorAbove: useAddSeparatorDialog(draftRef, setDialog),
     renameActiveGroup: useCallback(
       (entryId: string, name: string) => {
@@ -243,40 +257,6 @@ function useAddInactiveMod(
       applyDraft({ type: 'addMod', mod, index: currentDraft.entries.length });
     },
     [applyDraft, draftRef],
-  );
-}
-
-function useEditInactiveAlias(setDialog: (dialog: OrderDialog) => void) {
-  return useCallback(
-    (mod: ModMetadataDto): void => {
-      const identity = identityForMod(mod);
-      const originalValue = baseDisplayName(mod);
-      setDialog({
-        kind: 'editAlias',
-        identity,
-        value: originalValue,
-        originalValue,
-      });
-    },
-    [setDialog],
-  );
-}
-
-function useEditActiveAlias(
-  modByPackageId: Map<string, ModMetadataDto>,
-  setDialog: (dialog: OrderDialog) => void,
-) {
-  return useCallback(
-    (identity: ModIdentityDto): void => {
-      const originalValue = baseLabelForIdentity(identity, modByPackageId);
-      setDialog({
-        kind: 'editAlias',
-        identity,
-        value: originalValue,
-        originalValue,
-      });
-    },
-    [modByPackageId, setDialog],
   );
 }
 

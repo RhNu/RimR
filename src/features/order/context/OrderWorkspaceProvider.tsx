@@ -201,6 +201,7 @@ function useEditActions(core: OrderWorkspaceCore) {
     selectedInactivePackageIds: core.selection.selectedInactivePackageIds,
     sortedInactiveMods: core.derived.sortedInactiveMods,
     modByPackageId: core.derived.modByPackageId,
+    aliases: core.data.library.data?.settings.aliases ?? [],
     applyDraft: core.draftState.applyDraft,
     resetSelections: core.selection.resetSelections,
     onSaveAlias: core.commandsBase.handleSaveAlias,

@@ -19,6 +19,7 @@ import {
   activeModsKey,
   buildActiveRenderRows,
   buildInactiveRenderRows,
+  compileSmartModSearch,
   filterInactiveMods,
   unintroducedMods,
   type InactiveRenderRow,
@@ -38,7 +39,6 @@ type UseOrderDerivedDataParams = {
   activeSearch: string;
   availableSortKey: AvailableModSortKey;
   availableSortDirection: SortDirection;
-  inactiveTagFilter: string;
 };
 
 export function useOrderDerivedData({
@@ -51,7 +51,6 @@ export function useOrderDerivedData({
   activeSearch,
   availableSortKey,
   availableSortDirection,
-  inactiveTagFilter,
 }: UseOrderDerivedDataParams) {
   const mods = useMemo(() => scan?.catalog.mods ?? [], [scan]);
   const modByPackageId = useMemo(() => new Map(mods.map((mod) => [mod.packageId, mod])), [mods]);
@@ -66,14 +65,19 @@ export function useOrderDerivedData({
     tagDefs,
     modByPackageId,
     inactiveSearch,
-    inactiveTagFilter,
     availableSortKey,
     availableSortDirection,
   });
   const activeRows = useMemo(
     () =>
-      buildActiveRenderRows(draft?.entries ?? [], { query: activeSearch, aliases, modByPackageId }),
-    [activeSearch, aliases, draft?.entries, modByPackageId],
+      buildActiveRenderRows(draft?.entries ?? [], {
+        query: activeSearch,
+        aliases,
+        modByPackageId,
+        modTags,
+        tagDefs,
+      }),
+    [activeSearch, aliases, draft?.entries, modByPackageId, modTags, tagDefs],
   );
   const diagnosticsMap = useMemo(() => diagnosticsByPackage(validationResult), [validationResult]);
   const validationSummary = useMemo(
@@ -112,7 +116,6 @@ type UseInactiveModsParams = {
   tagDefs: TagDefDto[];
   modByPackageId: Map<string, ModMetadataDto>;
   inactiveSearch: string;
-  inactiveTagFilter: string;
   availableSortKey: AvailableModSortKey;
   availableSortDirection: SortDirection;
 };
@@ -125,7 +128,6 @@ function useInactiveMods({
   tagDefs,
   modByPackageId,
   inactiveSearch,
-  inactiveTagFilter,
   availableSortKey,
   availableSortDirection,
 }: UseInactiveModsParams): {
@@ -135,17 +137,19 @@ function useInactiveMods({
   inactiveSourceKeys: (string | null | undefined)[];
 } {
   const inactiveMods = useMemo(() => (draft ? unintroducedMods(mods, draft) : mods), [mods, draft]);
-  const filteredInactiveMods = useMemo(
+  const search = useMemo(
     () =>
-      filterInactiveMods(
-        inactiveMods,
+      compileSmartModSearch(inactiveSearch, {
         aliases,
-        inactiveSearch,
+        modByPackageId,
         modTags,
         tagDefs,
-        inactiveTagFilter,
-      ),
-    [inactiveMods, aliases, inactiveSearch, modTags, tagDefs, inactiveTagFilter],
+      }),
+    [aliases, inactiveSearch, modByPackageId, modTags, tagDefs],
+  );
+  const filteredInactiveMods = useMemo(
+    () => filterInactiveMods(inactiveMods, search),
+    [inactiveMods, search],
   );
   const sortedInactiveMods = useMemo(
     () => sortAvailableMods(filteredInactiveMods, availableSortKey, availableSortDirection),
@@ -154,24 +158,18 @@ function useInactiveMods({
   const inactiveRows = useMemo(
     () =>
       buildInactiveRenderRows(draft?.entries ?? [], sortedInactiveMods, {
-        query: inactiveSearch,
+        search,
         aliases,
         modByPackageId,
-        modTags,
-        tagDefs,
-        tagFilter: inactiveTagFilter,
         sortKey: availableSortKey,
         sortDirection: availableSortDirection,
       }),
     [
       aliases,
       draft?.entries,
-      inactiveSearch,
       modByPackageId,
       sortedInactiveMods,
-      modTags,
-      tagDefs,
-      inactiveTagFilter,
+      search,
       availableSortKey,
       availableSortDirection,
     ],

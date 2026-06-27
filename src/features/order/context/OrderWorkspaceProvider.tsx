@@ -161,7 +161,6 @@ function useDerivedWithDiff(
     activeSearch: filters.activeSearch,
     availableSortKey: filters.availableSortKey,
     availableSortDirection: filters.availableSortDirection,
-    inactiveTagFilter: filters.inactiveTagFilter,
   });
   const differsFromGame =
     draftState.draft != null &&

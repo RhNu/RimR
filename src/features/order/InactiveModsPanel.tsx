@@ -118,7 +118,7 @@ export function InactiveModsPanel() {
       id={INACTIVE_DROP_ID}
       title={t('order.unintroducedTitle')}
       count={derived.inactiveRows.length}
-      actions={<InactivePanelToolbar filters={filters} tagDefs={tagDefs} />}
+      actions={<InactivePanelToolbar filters={filters} />}
     >
       {derived.inactiveRows.map((row) => (
         <InactivePanelRow
@@ -141,10 +141,8 @@ type InactivePanelRowProps = RowProps & {
 
 function InactivePanelToolbar({
   filters,
-  tagDefs,
 }: {
   filters: ReturnType<typeof useOrderWorkspaceFilters>;
-  tagDefs: TagDefDto[];
 }) {
   return (
     <InactivePanelActions
@@ -154,9 +152,6 @@ function InactivePanelToolbar({
       onSearchChange={filters.setInactiveSearch}
       onSortKeyChange={filters.setAvailableSortKey}
       onToggleSortDirection={filters.toggleAvailableSortDirection}
-      tagFilter={filters.inactiveTagFilter}
-      onTagFilterChange={filters.setInactiveTagFilter}
-      tagDefs={tagDefs}
     />
   );
 }

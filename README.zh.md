@@ -12,6 +12,16 @@ RimR 是一款面向 [RimWorld](https://store.steampowered.com/app/294100/RimWor
 
 RimR 也支持数据文件的导入导出、从 RimWorld 存档导入模组顺序、中英文界面切换，以及本地模组列表快照库的管理。存档排序导入兼容普通 `.rws` 存档，也兼容由存档压缩模组生成的 gzip 或 zstd 压缩存档。
 
+## 搜索
+
+已启用与未启用列表共用同一套智能搜索。直接输入普通词即可搜索名称、Package ID、别名、作者、来源、分组和标签；也可以使用 `#标签`、`@"分组名称"`、`&steam`、`&local`、`!关键词` 等写法筛选或排除结果。
+
+示例：
+
+- `framework #qol` 查找匹配 `framework` 且带有匹配 `qol` 标签的模组。
+- `@"核心分组" &steam` 显示匹配分组中的 Steam 工坊模组。
+- `graphics !patch` 查找图形相关模组，并排除匹配 `patch` 的结果。
+
 ## 截图
 
 <details>

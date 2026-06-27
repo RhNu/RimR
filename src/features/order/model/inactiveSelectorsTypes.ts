@@ -1,11 +1,11 @@
 import type {
-  ModIdentityDto,
+  DisplayAliasDto,
   ModListEntryDto,
   ModListGroupChildDto,
   ModMetadataDto,
 } from '@/commands';
 import type { AvailableModSortKey, SortDirection } from '@/lib/availableMods';
-import type { RenderSearchOptions } from './searchSelectors';
+import type { CompiledSmartSearch } from './smartSearch';
 
 export type InactiveRenderRow =
   | {
@@ -34,9 +34,11 @@ export type InactiveRenderRow =
     };
 
 export type InactiveRenderContext = {
-  tokens: string[];
-  searchOptions: RenderSearchOptions;
-  hasTag: (identity: ModIdentityDto) => boolean;
+  searchOptions: {
+    aliases: DisplayAliasDto[];
+    modByPackageId: Map<string, ModMetadataDto>;
+  };
+  search: CompiledSmartSearch;
   catalogPackageIds: Set<string>;
   sortKey: AvailableModSortKey;
   sortDirection: SortDirection;

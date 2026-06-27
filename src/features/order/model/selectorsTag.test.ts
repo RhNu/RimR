@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { ModTagBindingDto, TagDefDto } from '@/commands';
+import type { DisplayAliasDto, ModMetadataDto, ModTagBindingDto, TagDefDto } from '@/commands';
 import { mod } from './testFixtures';
 import { buildInactiveRenderRows, filterInactiveMods } from './selectors';
+import { compileSmartModSearch } from './smartSearch';
 
 describe('order model tag filtering', () => {
   it('filters inactive mods by tag name in the search text', () => {
@@ -28,13 +29,13 @@ describe('order model tag filtering', () => {
     ];
 
     expect(
-      filterInactiveMods(inactiveMods, [], 'qual', modTags, tagDefs, '').map(
+      filterInactiveMods(inactiveMods, searchFor('qual', inactiveMods, [], modTags, tagDefs)).map(
         (item) => item.packageId,
       ),
     ).toEqual(['vanilla.expanded.framework']);
   });
 
-  it('filters inactive mods by selected tag id', () => {
+  it('filters inactive mods by tag modifier', () => {
     const inactiveMods = [
       mod('vanilla.expanded.framework', 'Vanilla Expanded Framework', {
         sourceKey: 'workshop:1',
@@ -69,17 +70,21 @@ describe('order model tag filtering', () => {
     ];
 
     expect(
-      filterInactiveMods(inactiveMods, [], '', modTags, tagDefs, 'tag-quality').map(
-        (item) => item.packageId,
-      ),
+      filterInactiveMods(
+        inactiveMods,
+        searchFor('#quality', inactiveMods, [], modTags, tagDefs),
+      ).map((item) => item.packageId),
     ).toEqual(['vanilla.expanded.framework']);
     expect(
-      filterInactiveMods(inactiveMods, [], '', modTags, tagDefs, 'tag-cosmetic').map(
-        (item) => item.packageId,
-      ),
+      filterInactiveMods(
+        inactiveMods,
+        searchFor('#cosmetic', inactiveMods, [], modTags, tagDefs),
+      ).map((item) => item.packageId),
     ).toEqual(['owlchemist.wallutilities']);
     expect(
-      filterInactiveMods(inactiveMods, [], '', modTags, tagDefs, '').map((item) => item.packageId),
+      filterInactiveMods(inactiveMods, searchFor('', inactiveMods, [], modTags, tagDefs)).map(
+        (item) => item.packageId,
+      ),
     ).toEqual(['vanilla.expanded.framework', 'owlchemist.wallutilities']);
   });
 });
@@ -93,6 +98,11 @@ describe('order model tag render rows', () => {
         identity: { packageId: 'c.extra', sourceKind: 'local', sourceKey: 'local:c.extra' },
         tagIds: ['tag-q'],
       },
+    ];
+    const catalogMods = [
+      mod('b.dep', 'Dependency'),
+      mod('c.extra', 'Extra'),
+      mod('d.other', 'Other'),
     ];
     const rows = buildInactiveRenderRows(
       [
@@ -108,9 +118,8 @@ describe('order model tag render rows', () => {
           ],
         },
       ],
-      [mod('b.dep', 'Dependency'), mod('c.extra', 'Extra'), mod('d.other', 'Other')],
+      catalogMods,
       {
-        query: '',
         aliases: [],
         modByPackageId: new Map([
           ['a.core', mod('a.core', 'Core')],
@@ -118,9 +127,7 @@ describe('order model tag render rows', () => {
           ['c.extra', mod('c.extra', 'Extra')],
           ['d.other', mod('d.other', 'Other')],
         ]),
-        modTags,
-        tagDefs,
-        tagFilter: 'tag-q',
+        search: searchFor('#q', catalogMods, [], modTags, tagDefs),
       },
     );
 
@@ -131,3 +138,18 @@ describe('order model tag render rows', () => {
     ]);
   });
 });
+
+function searchFor(
+  query: string,
+  mods: ModMetadataDto[],
+  aliases: DisplayAliasDto[] = [],
+  modTags: ModTagBindingDto[] = [],
+  tagDefs: TagDefDto[] = [],
+) {
+  return compileSmartModSearch(query, {
+    aliases,
+    modByPackageId: new Map(mods.map((item) => [item.packageId, item])),
+    modTags,
+    tagDefs,
+  });
+}

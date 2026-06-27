@@ -3,14 +3,11 @@ import type {
   ModMetadataDto,
   ModListEntryDto,
   ModListGroupChildDto,
+  ModTagBindingDto,
+  TagDefDto,
 } from '@/commands';
 import { childSortableId, entrySortableId } from '@/features/order/dndIds';
-import {
-  entrySearchText,
-  identitySearchText,
-  matchesTokens,
-  searchTokens,
-} from './searchSelectors';
+import { compileSmartModSearch, type CompiledSmartSearch } from './smartSearch';
 
 export {
   buildInactiveRenderRows,
@@ -50,6 +47,8 @@ export type ActiveRenderOptions = {
   query: string;
   aliases: DisplayAliasDto[];
   modByPackageId: Map<string, ModMetadataDto>;
+  modTags: ModTagBindingDto[];
+  tagDefs: TagDefDto[];
 };
 
 export function updateSelectionForClick(
@@ -91,10 +90,15 @@ export function buildActiveRenderRows(
   entries: ModListEntryDto[],
   options: ActiveRenderOptions,
 ): ActiveRenderRow[] {
-  const tokens = searchTokens(options.query);
+  const search = compileSmartModSearch(options.query, {
+    aliases: options.aliases,
+    modByPackageId: options.modByPackageId,
+    modTags: options.modTags,
+    tagDefs: options.tagDefs,
+  });
   const rows: ActiveRenderRow[] = [];
   for (const entry of entries) {
-    rows.push(...entryRenderRows(entry, tokens, options));
+    rows.push(...entryRenderRows(entry, search));
   }
   return rows;
 }
@@ -143,18 +147,18 @@ function toggledSelection(current: Set<string>, clickedId: string): SelectionUpd
   return { selected, anchorId: clickedId };
 }
 
-function entryRenderRows(
-  entry: ModListEntryDto,
-  tokens: string[],
-  options: ActiveRenderOptions,
-): ActiveRenderRow[] {
+function entryRenderRows(entry: ModListEntryDto, search: CompiledSmartSearch): ActiveRenderRow[] {
   if (entry.kind === 'group') {
-    return groupRenderRows(entry, tokens, options);
+    return groupRenderRows(entry, search);
   }
   if (entry.kind === 'mod' && entry.active === false) {
     return [];
   }
-  if (tokens.length === 0 || matchesTokens(entrySearchText(entry, options), tokens)) {
+  if (
+    entry.kind === 'separator'
+      ? search.matchesSeparator(entry.title)
+      : search.matchesIdentity(entry.identity)
+  ) {
     return [{ kind: 'entry', id: entrySortableId(entry.id), entry, entryId: entry.id, depth: 0 }];
   }
   return [];
@@ -162,20 +166,12 @@ function entryRenderRows(
 
 function groupRenderRows(
   entry: Extract<ModListEntryDto, { kind: 'group' }>,
-  tokens: string[],
-  options: ActiveRenderOptions,
+  search: CompiledSmartSearch,
 ): ActiveRenderRow[] {
-  const groupMatches = matchesTokens(entry.name, tokens);
   const activeChildren = entry.entries.filter((child) => child.active !== false);
-  const children =
-    tokens.length === 0 || groupMatches
-      ? activeChildren
-      : activeChildren.filter((child) =>
-          matchesTokens(identitySearchText(child.identity, options), tokens),
-        );
-  if (tokens.length > 0 && !groupMatches && children.length === 0) {
-    return [];
-  }
+  const children = activeChildren.filter((child) =>
+    search.matchesIdentity(child.identity, { groupName: entry.name }),
+  );
   if (children.length === 0) {
     return [];
   }

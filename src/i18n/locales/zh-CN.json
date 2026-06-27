@@ -293,7 +293,6 @@
       "separatorTitle": "分隔符标题",
       "sortAvailable": "排序可用 mod",
       "sortDirection": "排序方向",
-      "tagFilter": "按标签筛选",
       "selectForGrouping": "选择 {{name}} 进行分组",
       "addMod": "添加 {{name}}",
       "removeEntry": "移除 {{id}}"

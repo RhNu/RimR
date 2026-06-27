@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayAliasDto } from '@/commands';
+import type { DisplayAliasDto, ModMetadataDto, ModTagBindingDto, TagDefDto } from '@/commands';
 import { baseEntries, mod } from './testFixtures';
 import {
   activeModEntryIds,
@@ -14,6 +14,7 @@ import {
   selectedDragIds,
   updateSelectionForClick,
 } from './selectors';
+import { compileSmartModSearch } from './smartSearch';
 
 describe('order model selector helpers', () => {
   it('updates row selections from plain, toggle, and range clicks', () => {
@@ -86,15 +87,17 @@ describe('order model render selectors', () => {
     ];
 
     expect(
-      filterInactiveMods(inactiveMods, aliases, 've frame', [], [], '').map(
+      filterInactiveMods(inactiveMods, searchFor('ve frame', inactiveMods, aliases)).map(
         (item) => item.packageId,
       ),
     ).toEqual(['vanilla.expanded.framework']);
     expect(
-      filterInactiveMods(inactiveMods, aliases, 'owl', [], [], '').map((item) => item.packageId),
+      filterInactiveMods(inactiveMods, searchFor('owl', inactiveMods, aliases)).map(
+        (item) => item.packageId,
+      ),
     ).toEqual(['owlchemist.wallutilities']);
     expect(
-      filterInactiveMods(inactiveMods, aliases, 'workshop:2', [], [], '').map(
+      filterInactiveMods(inactiveMods, searchFor('workshop:2', inactiveMods, aliases)).map(
         (item) => item.packageId,
       ),
     ).toEqual(['owlchemist.wallutilities']);
@@ -108,6 +111,8 @@ describe('order model render selectors', () => {
         ['a.core', mod('a.core', 'Core')],
         ['b.dep', mod('b.dep', 'Dependency')],
       ]),
+      modTags: [],
+      tagDefs: [],
     });
 
     expect(rows.map((row) => row.id)).toEqual([
@@ -135,6 +140,8 @@ describe('order model render selectors', () => {
           ['a.core', mod('a.core', 'Core')],
           ['b.dep', mod('b.dep', 'Dependency')],
         ]),
+        modTags: [],
+        tagDefs: [],
       },
     );
 
@@ -158,16 +165,13 @@ describe('order model render selectors', () => {
       ],
       [mod('b.dep', 'Dependency'), mod('c.extra', 'Extra')],
       {
-        query: '',
         aliases: [],
         modByPackageId: new Map([
           ['a.core', mod('a.core', 'Core')],
           ['b.dep', mod('b.dep', 'Dependency')],
           ['c.extra', mod('c.extra', 'Extra')],
         ]),
-        modTags: [],
-        tagDefs: [],
-        tagFilter: '',
+        search: searchFor('', []),
       },
     );
 
@@ -201,15 +205,12 @@ describe('order model inactive render sorting', () => {
       ],
       [mod('a.core', 'Alpha'), mod('z.core', 'Zeta')],
       {
-        query: '',
         aliases: [],
         modByPackageId: new Map([
           ['a.core', mod('a.core', 'Alpha')],
           ['z.core', mod('z.core', 'Zeta')],
         ]),
-        modTags: [],
-        tagDefs: [],
-        tagFilter: '',
+        search: searchFor('', []),
       },
     );
 
@@ -248,7 +249,6 @@ describe('order model inactive render sorting', () => {
       ],
       [mod('m.mid', 'Middle', { modifiedAtMs: 20 }), mod('z.low', 'Low', { modifiedAtMs: 1 })],
       {
-        query: '',
         aliases: [],
         modByPackageId: new Map([
           ['a.core', mod('a.core', 'Alpha', { modifiedAtMs: 5 })],
@@ -257,9 +257,7 @@ describe('order model inactive render sorting', () => {
           ['m.mid', mod('m.mid', 'Middle', { modifiedAtMs: 20 })],
           ['z.low', mod('z.low', 'Low', { modifiedAtMs: 1 })],
         ]),
-        modTags: [],
-        tagDefs: [],
-        tagFilter: '',
+        search: searchFor('', []),
         sortKey: 'modifiedAt',
         sortDirection: 'desc',
       },
@@ -277,3 +275,18 @@ describe('order model inactive render sorting', () => {
     ]);
   });
 });
+
+function searchFor(
+  query: string,
+  mods: ModMetadataDto[],
+  aliases: DisplayAliasDto[] = [],
+  modTags: ModTagBindingDto[] = [],
+  tagDefs: TagDefDto[] = [],
+) {
+  return compileSmartModSearch(query, {
+    aliases,
+    modByPackageId: new Map(mods.map((item) => [item.packageId, item])),
+    modTags,
+    tagDefs,
+  });
+}

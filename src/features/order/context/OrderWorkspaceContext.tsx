@@ -32,8 +32,6 @@ export type OrderFilters = {
   setInactiveSearch: (value: string) => void;
   activeSearch: string;
   setActiveSearch: (value: string) => void;
-  inactiveTagFilter: string;
-  setInactiveTagFilter: (value: string) => void;
 };
 
 export type OrderWorkspaceValue = {

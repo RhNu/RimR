@@ -12,6 +12,16 @@ The model is **Library Settings → Mod List → Apply**:
 
 RimR also supports importing and exporting data files, importing a mod order from a RimWorld save file, switching between English and Simplified Chinese, and managing a local library of mod list snapshots. Save-file order import works with normal `.rws` saves as well as gzip- or zstd-compressed saves created by save compression mods.
 
+## Search
+
+The Active and Inactive lists share the same smart search box. Type normal words to search names, package IDs, aliases, authors, sources, groups, and tags. You can also use filters such as `#tag`, `@"group name"`, `&steam`, `&local`, and `!word` to narrow or exclude results.
+
+Examples:
+
+- `framework #qol` finds mods matching `framework` with a matching `qol` tag.
+- `@"Core Mods" &steam` shows Steam Workshop mods in a matching group.
+- `graphics !patch` finds graphics-related mods while excluding matches for `patch`.
+
 ## Screenshots
 
 <details>

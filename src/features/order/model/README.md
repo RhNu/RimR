@@ -14,7 +14,7 @@
 | 文件                                                                 | 职责                                                        |
 | -------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `reducer.ts` / `reducerOperations.ts` / `reducerActiveOperations.ts` | `modListReducer` 与操作函数。                               |
-| `selectors.ts` / `inactiveSelectors.ts` / `searchSelectors.ts`       | 渲染行、选择更新、搜索筛选等纯派生。                        |
+| `selectors.ts` / `inactiveSelectors.ts` / `smartSearch.ts`           | 渲染行、选择更新、搜索筛选等纯派生。                        |
 | `diff.ts`                                                            | 草稿 ↔ 游戏配置的 diff 与 apply projection。                |
 | `dnd.ts` / `dragActions.ts`                                          | 拖拽落点解析与移动算法。                                    |
 | `syncFromGame.ts` / `missingEntries.ts`                              | 同步与缺失项分类。                                          |

@@ -29,7 +29,6 @@ export function useOrderFilters(): OrderFilters {
     useState<OrderFilters['availableSortDirection']>('asc');
   const [inactiveSearch, setInactiveSearch] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [inactiveTagFilter, setInactiveTagFilter] = useState('');
   const toggleAvailableSortDirection = useCallback(() => {
     setAvailableSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
   }, []);
@@ -42,8 +41,6 @@ export function useOrderFilters(): OrderFilters {
     setInactiveSearch,
     activeSearch,
     setActiveSearch,
-    inactiveTagFilter,
-    setInactiveTagFilter,
   };
 }
 

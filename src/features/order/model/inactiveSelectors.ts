@@ -1,83 +1,37 @@
 import type {
   DisplayAliasDto,
-  ModIdentityDto,
   ModMetadataDto,
   ModListEntryDto,
   ModListGroupChildDto,
-  ModTagBindingDto,
-  TagDefDto,
 } from '@/commands';
 import {
   childSortableId,
   entrySortableId,
   inactiveCatalogSortableId,
 } from '@/features/order/dndIds';
-import { identityForMod } from '@/features/order/identity';
-import { tagIdsForIdentity } from '@/features/tags/tagModel';
 import type { AvailableModSortKey, SortDirection } from '@/lib/availableMods';
 import type { InactiveRenderContext, InactiveRenderRow } from './inactiveSelectorsTypes';
 import { sortGroupBlocks, sortOrdinaryRows } from './inactiveSorting';
-import {
-  entrySearchText,
-  identitySearchText,
-  inactiveSearchText,
-  matchesTokens,
-  searchTokens,
-} from './searchSelectors';
+import type { CompiledSmartSearch } from './smartSearch';
 
 export type { InactiveRenderContext, InactiveRenderRow };
 
 export type InactiveRenderOptions = {
-  query: string;
+  search: CompiledSmartSearch;
   aliases: DisplayAliasDto[];
   modByPackageId: Map<string, ModMetadataDto>;
-  modTags: ModTagBindingDto[];
-  tagDefs: TagDefDto[];
-  tagFilter: string;
   sortKey?: AvailableModSortKey;
   sortDirection?: SortDirection;
 };
 
-type TagSearchContext = {
-  tagNamesForIdentity: (identity: ModIdentityDto) => string[];
-  hasTag: (identity: ModIdentityDto) => boolean;
-};
-
-function buildTagContext(
-  modTags: ModTagBindingDto[],
-  tagDefs: TagDefDto[],
-  tagFilter: string,
-): TagSearchContext {
-  const defByIdMap = new Map(tagDefs.map((def) => [def.id, def] as const));
-  return {
-    tagNamesForIdentity: (identity: ModIdentityDto) =>
-      tagIdsForIdentity(modTags, identity)
-        .map((id) => defByIdMap.get(id)?.name)
-        .filter((name): name is string => Boolean(name)),
-    hasTag: tagFilter
-      ? (identity: ModIdentityDto) => tagIdsForIdentity(modTags, identity).includes(tagFilter)
-      : () => true,
-  };
-}
-
 export function filterInactiveMods(
   mods: ModMetadataDto[],
-  aliases: DisplayAliasDto[],
-  query: string,
-  modTags: ModTagBindingDto[],
-  tagDefs: TagDefDto[],
-  tagFilter: string,
+  search: CompiledSmartSearch,
 ): ModMetadataDto[] {
-  const tokens = searchTokens(query);
-  if (tokens.length === 0 && !tagFilter) {
+  if (search.isEmpty) {
     return mods;
   }
-  const { tagNamesForIdentity, hasTag } = buildTagContext(modTags, tagDefs, tagFilter);
-  return mods.filter((mod) => {
-    if (!hasTag(identityForMod(mod))) return false;
-    if (tokens.length === 0) return true;
-    return matchesTokens(inactiveSearchText(mod, aliases, tagNamesForIdentity), tokens);
-  });
+  return mods.filter((mod) => search.matchesMod(mod));
 }
 
 export function buildInactiveRenderRows(
@@ -99,16 +53,7 @@ export function buildInactiveRenderRows(
   }
   for (const mod of catalogMods) {
     if (structured.has(mod.packageId)) continue;
-    if (!ctx.hasTag(identityForMod(mod))) continue;
-    if (
-      ctx.tokens.length > 0 &&
-      !matchesTokens(
-        inactiveSearchText(mod, options.aliases, ctx.searchOptions.tagNamesForIdentity),
-        ctx.tokens,
-      )
-    ) {
-      continue;
-    }
+    if (!ctx.search.matchesMod(mod)) continue;
     ordinaryRows.push({
       kind: 'catalog',
       id: inactiveCatalogSortableId(mod.packageId),
@@ -121,19 +66,12 @@ export function buildInactiveRenderRows(
 }
 
 function inactiveRenderContext(options: InactiveRenderOptions): InactiveRenderContext {
-  const { tagNamesForIdentity, hasTag } = buildTagContext(
-    options.modTags,
-    options.tagDefs,
-    options.tagFilter,
-  );
   return {
-    tokens: searchTokens(options.query),
     searchOptions: {
       aliases: options.aliases,
       modByPackageId: options.modByPackageId,
-      tagNamesForIdentity,
     },
-    hasTag,
+    search: options.search,
     catalogPackageIds: new Set(),
     sortKey: options.sortKey ?? 'name',
     sortDirection: options.sortDirection ?? 'asc',
@@ -157,12 +95,7 @@ function inactiveModEntryRenderRows(
 ): InactiveRenderRow[] {
   if (entry.active !== false) return [];
   const missing = !ctx.searchOptions.modByPackageId.has(entry.identity.packageId);
-  if (!ctx.hasTag(entry.identity)) return [];
-  if (
-    ctx.tokens.length > 0 &&
-    !matchesTokens(entrySearchText(entry, ctx.searchOptions), ctx.tokens)
-  )
-    return [];
+  if (!ctx.search.matchesIdentity(entry.identity)) return [];
   return [
     {
       kind: 'entry',
@@ -179,9 +112,7 @@ function inactiveGroupRenderRows(
   entry: Extract<ModListEntryDto, { kind: 'group' }>,
   ctx: InactiveRenderContext,
 ): InactiveRenderRow[] {
-  const groupMatches = matchesTokens(entry.name, ctx.tokens);
-  const children = inactiveGroupChildren(entry, groupMatches, ctx);
-  if (ctx.tokens.length > 0 && !groupMatches && children.length === 0) return [];
+  const children = inactiveGroupChildren(entry, ctx);
   if (children.length === 0) return [];
   return [
     {
@@ -208,14 +139,11 @@ function inactiveGroupRenderRows(
 
 function inactiveGroupChildren(
   entry: Extract<ModListEntryDto, { kind: 'group' }>,
-  groupMatches: boolean,
   ctx: InactiveRenderContext,
 ): ModListGroupChildDto[] {
   return entry.entries.filter((child) => {
     if (child.active !== false) return false;
-    if (!ctx.hasTag(child.identity)) return false;
-    if (ctx.tokens.length === 0 || groupMatches) return true;
-    return matchesTokens(identitySearchText(child.identity, ctx.searchOptions), ctx.tokens);
+    return ctx.search.matchesIdentity(child.identity, { groupName: entry.name });
   });
 }
 

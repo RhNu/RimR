@@ -293,7 +293,6 @@
       "separatorTitle": "Separator title",
       "sortAvailable": "Sort available mods",
       "sortDirection": "Sort direction",
-      "tagFilter": "Filter by tag",
       "selectForGrouping": "Select {{name}} for grouping",
       "addMod": "Add {{name}}",
       "removeEntry": "Remove {{id}}"

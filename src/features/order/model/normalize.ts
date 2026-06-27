@@ -4,10 +4,14 @@ import type { GroupChild, GroupEntry, ModEntry, SeparatorEntry } from './types';
 export function flattenModListEntries(entries: ModListEntryDto[]): string[] {
   const packages: string[] = [];
   for (const entry of entries) {
-    if (entry.kind === 'mod') {
+    if (entry.kind === 'mod' && entry.active !== false) {
       packages.push(entry.identity.packageId);
     } else if (entry.kind === 'group') {
-      packages.push(...entry.entries.map((child) => child.identity.packageId));
+      packages.push(
+        ...entry.entries
+          .filter((child) => child.active !== false)
+          .map((child) => child.identity.packageId),
+      );
     }
   }
   return packages;
@@ -67,11 +71,11 @@ function normalizeModEntry(
   packages: Set<string>,
   entryIds: Set<string>,
 ): ModEntry | null {
-  if (entry.active === false || packages.has(entry.identity.packageId)) {
+  if (packages.has(entry.identity.packageId)) {
     return null;
   }
   packages.add(entry.identity.packageId);
-  return { ...entry, active: true, id: uniqueId(entry.id, entryIds) };
+  return { ...entry, active: entry.active ?? true, id: uniqueId(entry.id, entryIds) };
 }
 
 function normalizeGroupEntry(
@@ -82,11 +86,11 @@ function normalizeGroupEntry(
 ): GroupEntry | null {
   const children: GroupChild[] = [];
   for (const child of entry.entries) {
-    if (child.active === false || packages.has(child.identity.packageId)) {
+    if (packages.has(child.identity.packageId)) {
       continue;
     }
     packages.add(child.identity.packageId);
-    children.push({ ...child, active: true, id: uniqueId(child.id, childIds) });
+    children.push({ ...child, active: child.active ?? true, id: uniqueId(child.id, childIds) });
   }
   return { ...entry, id: uniqueId(entry.id, entryIds), entries: children };
 }

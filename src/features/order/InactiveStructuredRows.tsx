@@ -45,6 +45,8 @@ type InactiveEntryRowProps = {
   ) => void;
   onContextOpen: (entry: ModListEntryDto) => void;
   onRenameGroup: (entryId: string, name: string) => void;
+  onAddActive: (entryId: string) => void;
+  onDoubleClick: (entryId: string) => void;
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
@@ -60,6 +62,8 @@ export function InactiveEntryRow({
   onSelect,
   onContextOpen,
   onRenameGroup,
+  onAddActive,
+  onDoubleClick,
   onEditAlias,
   onOpenModFolder,
   onOpenSteamWorkshopPage,
@@ -79,6 +83,7 @@ export function InactiveEntryRow({
         <div
           ref={setNodeRef}
           onPointerEnter={() => warmInactiveEntry(row.entry, onWarmFileInfo)}
+          onDoubleClick={() => onDoubleClick(row.entry.id)}
           className={inactiveRowClassName(isDragging, row.missing)}
           {...attributes}
           {...listeners}
@@ -105,6 +110,7 @@ export function InactiveEntryRow({
         entry={row.entry}
         sourceKey={sourceKey}
         onRenameGroup={onRenameGroup}
+        onAddActive={onAddActive}
         onEditAlias={onEditAlias}
         onOpenModFolder={onOpenModFolder}
         onOpenSteamWorkshopPage={onOpenSteamWorkshopPage}
@@ -128,6 +134,8 @@ type InactiveChildRowProps = {
   modByPackageId: Map<string, ModMetadataDto>;
   onWarmFileInfo: (sourceKey: string | null | undefined, immediate?: boolean) => void;
   onSelect: (child: ModListGroupChildDto) => void;
+  onAddActive: (groupId: string, childId: string) => void;
+  onDoubleClick: (groupId: string, childId: string) => void;
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
@@ -141,6 +149,8 @@ export function InactiveChildRow({
   modByPackageId,
   onWarmFileInfo,
   onSelect,
+  onAddActive,
+  onDoubleClick,
   onEditAlias,
   onOpenModFolder,
   onOpenSteamWorkshopPage,
@@ -160,6 +170,7 @@ export function InactiveChildRow({
         <div
           ref={setNodeRef}
           onPointerEnter={() => onWarmFileInfo(sourceKey)}
+          onDoubleClick={() => onDoubleClick(row.groupId, row.child.id)}
           className={cn(inactiveRowClassName(isDragging, row.missing), 'h-6 pl-8')}
           {...attributes}
           {...listeners}
@@ -186,6 +197,7 @@ export function InactiveChildRow({
       <InactiveChildMenu
         row={row}
         sourceKey={sourceKey}
+        onAddActive={onAddActive}
         onEditAlias={onEditAlias}
         onOpenModFolder={onOpenModFolder}
         onOpenSteamWorkshopPage={onOpenSteamWorkshopPage}

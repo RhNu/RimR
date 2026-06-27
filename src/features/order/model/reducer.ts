@@ -2,8 +2,10 @@ import type { ModListDto, ModMetadataDto } from '@/commands';
 import { normalizeModList } from './normalize';
 import {
   moveEntriesAndSetActive,
+  moveEntriesToIndexAndSetActive,
   moveEntriesToGroupAndSetActive,
   setEntriesActive,
+  setGroupChildrenActiveAndMoveGroup,
   setGroupChildrenActive,
 } from './reducerActiveOperations';
 import {
@@ -26,6 +28,20 @@ import type { ModListAction } from './types';
 
 export { classifyMissingEntries, removeMissingEntries } from './missingEntries';
 
+type ActiveStateAction = Extract<
+  ModListAction,
+  {
+    type:
+      | 'setEntryActive'
+      | 'setEntriesActive'
+      | 'setGroupChildrenActive'
+      | 'moveEntriesAndSetActive'
+      | 'moveEntriesToIndexAndSetActive'
+      | 'moveEntriesToGroupAndSetActive'
+      | 'setGroupChildrenActiveAndMoveGroup';
+  }
+>;
+
 export function unintroducedMods(mods: ModMetadataDto[], modList: ModListDto): ModMetadataDto[] {
   const introduced = new Set(packagesUnavailableForInactiveCatalog(modList.entries));
   return mods.filter((mod) => !introduced.has(mod.packageId));
@@ -40,6 +56,10 @@ function packagesUnavailableForInactiveCatalog(entries: ModListDto['entries']): 
 }
 
 export function modListReducer(modList: ModListDto, action: ModListAction): ModListDto {
+  if (isActiveStateAction(action)) {
+    return reduceActiveStateAction(modList, action);
+  }
+
   switch (action.type) {
     case 'replace':
       return normalizeModList(action.modList);
@@ -57,34 +77,12 @@ export function modListReducer(modList: ModListDto, action: ModListAction): ModL
       return removeEntries(modList, action.entryIds);
     case 'removeGroupChild':
       return removeGroupChild(modList, action.groupId, action.childId);
-    case 'setEntryActive':
-      return setEntriesActive(modList, [action.entryId], action.active);
-    case 'setEntriesActive':
-      return setEntriesActive(modList, action.entryIds, action.active);
-    case 'setGroupChildrenActive':
-      return setGroupChildrenActive(modList, action.groupId, action.childIds, action.active);
     case 'moveEntry':
       return moveEntry(modList, action.entryId, action.targetEntryId, action.edge);
     case 'moveEntries':
       return moveEntries(modList, action.entryIds, action.targetEntryId, action.edge);
-    case 'moveEntriesAndSetActive':
-      return moveEntriesAndSetActive(
-        modList,
-        action.entryIds,
-        action.targetEntryId,
-        action.edge,
-        action.active,
-      );
     case 'moveEntriesToGroup':
       return moveEntriesToGroup(modList, action.entryIds, action.groupId, action.index);
-    case 'moveEntriesToGroupAndSetActive':
-      return moveEntriesToGroupAndSetActive(
-        modList,
-        action.entryIds,
-        action.groupId,
-        action.index,
-        action.active,
-      );
     case 'moveGroupChild':
       return moveGroupChild(
         modList,
@@ -112,5 +110,58 @@ export function modListReducer(modList: ModListDto, action: ModListAction): ModL
       return insertSeparator(modList, action.separator, action.index);
     case 'renameSeparator':
       return renameSeparator(modList, action.entryId, action.title);
+  }
+}
+
+function isActiveStateAction(action: ModListAction): action is ActiveStateAction {
+  return (
+    action.type === 'setEntryActive' ||
+    action.type === 'setEntriesActive' ||
+    action.type === 'setGroupChildrenActive' ||
+    action.type === 'moveEntriesAndSetActive' ||
+    action.type === 'moveEntriesToIndexAndSetActive' ||
+    action.type === 'moveEntriesToGroupAndSetActive' ||
+    action.type === 'setGroupChildrenActiveAndMoveGroup'
+  );
+}
+
+function reduceActiveStateAction(modList: ModListDto, action: ActiveStateAction): ModListDto {
+  switch (action.type) {
+    case 'setEntryActive':
+      return setEntriesActive(modList, [action.entryId], action.active);
+    case 'setEntriesActive':
+      return setEntriesActive(modList, action.entryIds, action.active);
+    case 'setGroupChildrenActive':
+      return setGroupChildrenActive(modList, action.groupId, action.childIds, action.active);
+    case 'moveEntriesAndSetActive':
+      return moveEntriesAndSetActive(
+        modList,
+        action.entryIds,
+        action.targetEntryId,
+        action.edge,
+        action.active,
+      );
+    case 'moveEntriesToIndexAndSetActive':
+      return moveEntriesToIndexAndSetActive(modList, action.entryIds, action.index, action.active);
+    case 'moveEntriesToGroupAndSetActive':
+      return moveEntriesToGroupAndSetActive(
+        modList,
+        action.entryIds,
+        action.groupId,
+        action.index,
+        action.active,
+      );
+    case 'setGroupChildrenActiveAndMoveGroup':
+      return setGroupChildrenActiveAndMoveGroup(
+        modList,
+        action.groupId,
+        action.childIds,
+        action.active,
+        {
+          index: action.index,
+          targetEntryId: action.targetEntryId,
+          edge: action.edge,
+        },
+      );
   }
 }

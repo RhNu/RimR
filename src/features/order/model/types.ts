@@ -51,6 +51,12 @@ export type ModListAction =
       active: boolean;
     }
   | {
+      type: 'moveEntriesToIndexAndSetActive';
+      entryIds: string[];
+      index: number;
+      active: boolean;
+    }
+  | {
       type: 'moveEntriesToGroupAndSetActive';
       entryIds: string[];
       groupId: string;
@@ -64,6 +70,15 @@ export type ModListAction =
       childId: string;
       targetChildId: string;
       edge: Exclude<DropEdge, 'inside'>;
+    }
+  | {
+      type: 'setGroupChildrenActiveAndMoveGroup';
+      groupId: string;
+      childIds: string[];
+      active: boolean;
+      index?: number;
+      targetEntryId?: string;
+      edge?: Exclude<DropEdge, 'inside'>;
     }
   | { type: 'createGroup'; entryIds: string[]; groupId: string; name: string }
   | {

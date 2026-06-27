@@ -7,6 +7,10 @@ import {
   parseChildId,
   parseEntryId,
 } from '@/features/order/dndIds';
+import {
+  resolveInactiveChildDropAction,
+  resolveInactiveEntryDropOnEntry,
+} from './dragInactiveActions';
 import type { DropEdge, ModListAction } from './types';
 
 export type DropIndicatorState = {
@@ -125,16 +129,20 @@ function resolveEntryDrag(input: ResolveDragActionInput): ModListAction | null {
   const active = parseEntryId(input.activeId);
   if (!active) return null;
   const entryId = active.entryId;
-  const entryIds = orderedSelectedDragIds(
-    entryId,
-    input.selectedEntryIds,
-    input.visibleActiveEntryIds,
-  );
+  const entryIds =
+    active.side === 'active'
+      ? orderedSelectedDragIds(entryId, input.selectedEntryIds, input.visibleActiveEntryIds)
+      : [entryId];
   if (active.side === 'active' && input.overId === 'inactive-drop') {
-    return { type: 'removeEntries', entryIds };
+    return { type: 'setEntriesActive', entryIds, active: false };
   }
-  if (active.side === 'inactive') {
-    return null;
+  if (active.side === 'inactive' && input.overId === 'active-drop') {
+    return {
+      type: 'moveEntriesToIndexAndSetActive',
+      entryIds,
+      index: input.modList.entries.length,
+      active: true,
+    };
   }
   const overEntry = parseEntryId(input.overId);
   if (overEntry) {
@@ -153,7 +161,10 @@ function entryDropOnEntry(
   entryIds: string[],
   over: { side: 'active' | 'inactive'; entryId: string },
 ): ModListAction | null {
-  if (active.side !== 'active' || over.side !== 'active') return null;
+  if (over.side !== 'active') return null;
+  if (active.side === 'inactive') {
+    return resolveInactiveEntryDropOnEntry(input, entryIds, over.entryId);
+  }
   const targetEntry = entryById(input.modList, over.entryId);
   const movingEntries = entriesByIds(input.modList, entryIds);
   if (canDropInsideGroup(targetEntry, input.dropIndicator, movingEntries)) {
@@ -179,7 +190,16 @@ function entryDropOnChild(
   over: { side: 'active' | 'inactive'; groupId: string; childId: string },
 ): ModListAction | null {
   const movingEntries = entriesByIds(input.modList, entryIds);
-  if (active.side !== 'active' || over.side !== 'active' || !allMods(movingEntries)) return null;
+  if (over.side !== 'active' || !allMods(movingEntries)) return null;
+  if (active.side === 'inactive') {
+    return {
+      type: 'moveEntriesToGroupAndSetActive',
+      entryIds,
+      groupId: over.groupId,
+      index: childIndexWithEdge(input.modList, over.groupId, over.childId, input.dropIndicator),
+      active: true,
+    };
+  }
   return {
     type: 'moveEntriesToGroup',
     entryIds,
@@ -192,10 +212,15 @@ function resolveChildDrag(input: ResolveDragActionInput): ModListAction | null {
   const active = parseChildId(input.activeId);
   if (!active) return null;
   if (active.side === 'active' && input.overId === 'inactive-drop') {
-    return { type: 'removeGroupChild', groupId: active.groupId, childId: active.childId };
+    return {
+      type: 'setGroupChildrenActive',
+      groupId: active.groupId,
+      childIds: [active.childId],
+      active: false,
+    };
   }
   if (active.side === 'inactive') {
-    return null;
+    return resolveInactiveChildDropAction(input, active);
   }
   const over = parseChildId(input.overId);
   if (!over || active.groupId !== over.groupId || active.side !== over.side) {

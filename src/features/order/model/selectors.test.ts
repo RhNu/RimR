@@ -116,7 +116,7 @@ describe('order model render selectors', () => {
     ]);
   });
 
-  it('builds active render rows without filtering legacy inactive flags', () => {
+  it('builds active render rows from active entries and active group children only', () => {
     const rows = buildActiveRenderRows(
       [
         { kind: 'mod', id: 'entry-a', active: false, identity: { packageId: 'a.core' } },
@@ -138,14 +138,10 @@ describe('order model render selectors', () => {
       },
     );
 
-    expect(rows.map((row) => row.id)).toEqual([
-      'active:entry:entry-a',
-      'active:entry:group-required',
-      'active:child:group-required:child-b',
-    ]);
+    expect(rows.map((row) => row.id)).toEqual([]);
   });
 
-  it('builds inactive render rows from catalog mods and missing structured entries', () => {
+  it('builds inactive render rows from catalog mods and structured inactive entries', () => {
     const rows = buildInactiveRenderRows(
       [
         {
@@ -177,11 +173,12 @@ describe('order model render selectors', () => {
 
     expect(rows.map((row) => row.id)).toEqual([
       'inactive:entry:group-mixed',
+      'inactive:child:group-mixed:child-inactive',
       'inactive:child:group-mixed:child-missing',
-      'inactive:catalog:b.dep',
       'inactive:catalog:c.extra',
     ]);
-    expect(rows[1]).toMatchObject({ kind: 'child', missing: true });
+    expect(rows[1]).toMatchObject({ kind: 'child', missing: false });
+    expect(rows[2]).toMatchObject({ kind: 'child', missing: true });
   });
 
   it('prunes hidden selections and keeps the selected drag payload ordered by selection', () => {
@@ -218,7 +215,7 @@ describe('order model inactive render sorting', () => {
 
     expect(rows.map((row) => row.id)).toEqual([
       'inactive:catalog:a.core',
-      'inactive:catalog:z.core',
+      'inactive:entry:entry-z',
     ]);
   });
 
@@ -269,6 +266,11 @@ describe('order model inactive render sorting', () => {
     );
 
     expect(rows.map((row) => row.id)).toEqual([
+      'inactive:entry:group-hot',
+      'inactive:child:group-hot:child-a',
+      'inactive:child:group-hot:child-c',
+      'inactive:entry:group-cold',
+      'inactive:child:group-cold:child-b',
       'inactive:catalog:m.mid',
       'inactive:catalog:z.low',
       'inactive:entry:entry-missing',

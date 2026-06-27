@@ -12,19 +12,28 @@ export function classifyMissingEntries(
 ): MissingEntryClassification {
   const installed = new Set(catalogMods.map((mod) => mod.packageId));
   const active: string[] = [];
+  const inactive: string[] = [];
   for (const entry of modList.entries) {
     if (entry.kind === 'mod') {
-      collectMissingPackage(entry.identity.packageId, installed, active);
+      collectMissingPackage(
+        entry.identity.packageId,
+        installed,
+        entry.active === false ? inactive : active,
+      );
       continue;
     }
     if (entry.kind === 'group') {
       for (const child of entry.entries) {
-        collectMissingPackage(child.identity.packageId, installed, active);
+        collectMissingPackage(
+          child.identity.packageId,
+          installed,
+          child.active === false ? inactive : active,
+        );
       }
     }
   }
 
-  return { active, inactive: [] };
+  return { active, inactive };
 }
 
 export function removeMissingEntries(modList: ModListDto, packageIds: string[]): ModListDto {

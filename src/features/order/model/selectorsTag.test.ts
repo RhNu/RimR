@@ -103,7 +103,7 @@ describe('order model tag render rows', () => {
           collapsed: false,
           entries: [
             { id: 'child-active', active: true, identity: { packageId: 'a.core' } },
-            { id: 'child-missing', active: true, identity: { packageId: 'missing.mod' } },
+            { id: 'child-missing', active: false, identity: { packageId: 'missing.mod' } },
             { id: 'child-other', active: false, identity: { packageId: 'other.mod' } },
           ],
         },

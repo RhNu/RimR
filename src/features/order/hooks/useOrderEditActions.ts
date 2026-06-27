@@ -130,6 +130,8 @@ function useDialogOpenActions({
   const { t } = useTranslation();
   return {
     addInactiveMod: useAddInactiveMod(draftRef, applyDraft),
+    activateInactiveEntry: useActivateInactiveEntry(draftRef, applyDraft),
+    activateInactiveChild: useActivateInactiveChild(draftRef, applyDraft),
     createInactiveGroupDialog: useCallback(() => {
       setDialog({ kind: 'createInactiveGroup', value: t('order.groupDefault') });
     }, [setDialog, t]),
@@ -138,7 +140,7 @@ function useDialogOpenActions({
     handleActiveDoubleClick: useCallback(
       (entry: ModListEntryDto) => {
         if (entry.kind === 'mod') {
-          applyDraft({ type: 'removeEntry', entryId: entry.id });
+          applyDraft({ type: 'setEntryActive', entryId: entry.id, active: false });
         }
       },
       [applyDraft],
@@ -166,7 +168,7 @@ function useDialogOpenActions({
     ),
     removeGroupChild: useCallback(
       (groupId: string, childId: string) => {
-        applyDraft({ type: 'removeGroupChild', groupId, childId });
+        applyDraft({ type: 'setGroupChildrenActive', groupId, childIds: [childId], active: false });
       },
       [applyDraft],
     ),
@@ -179,8 +181,52 @@ function useRemoveEntry(
 ) {
   return useCallback(
     (entryId: string): void => {
-      if (!draftRef.current?.entries.some((candidate) => candidate.id === entryId)) return;
-      applyDraft({ type: 'removeEntry', entryId });
+      const entry = draftRef.current?.entries.find((candidate) => candidate.id === entryId);
+      if (!entry) return;
+      if (entry.kind === 'separator') {
+        applyDraft({ type: 'removeEntry', entryId });
+        return;
+      }
+      applyDraft({ type: 'setEntryActive', entryId, active: false });
+    },
+    [applyDraft, draftRef],
+  );
+}
+
+function useActivateInactiveEntry(
+  draftRef: MutableRefObject<ModListDto | null>,
+  applyDraft: (action: ModListAction) => void,
+) {
+  return useCallback(
+    (entryId: string): void => {
+      const currentDraft = draftRef.current;
+      if (!currentDraft?.entries.some((candidate) => candidate.id === entryId)) return;
+      applyDraft({
+        type: 'moveEntriesToIndexAndSetActive',
+        entryIds: [entryId],
+        index: currentDraft.entries.length,
+        active: true,
+      });
+    },
+    [applyDraft, draftRef],
+  );
+}
+
+function useActivateInactiveChild(
+  draftRef: MutableRefObject<ModListDto | null>,
+  applyDraft: (action: ModListAction) => void,
+) {
+  return useCallback(
+    (groupId: string, childId: string): void => {
+      const currentDraft = draftRef.current;
+      if (!currentDraft) return;
+      applyDraft({
+        type: 'setGroupChildrenActiveAndMoveGroup',
+        groupId,
+        childIds: [childId],
+        active: true,
+        index: currentDraft.entries.length,
+      });
     },
     [applyDraft, draftRef],
   );

@@ -151,6 +151,9 @@ function entryRenderRows(
   if (entry.kind === 'group') {
     return groupRenderRows(entry, tokens, options);
   }
+  if (entry.kind === 'mod' && entry.active === false) {
+    return [];
+  }
   if (tokens.length === 0 || matchesTokens(entrySearchText(entry, options), tokens)) {
     return [{ kind: 'entry', id: entrySortableId(entry.id), entry, entryId: entry.id, depth: 0 }];
   }
@@ -163,10 +166,11 @@ function groupRenderRows(
   options: ActiveRenderOptions,
 ): ActiveRenderRow[] {
   const groupMatches = matchesTokens(entry.name, tokens);
+  const activeChildren = entry.entries.filter((child) => child.active !== false);
   const children =
     tokens.length === 0 || groupMatches
-      ? entry.entries
-      : entry.entries.filter((child) =>
+      ? activeChildren
+      : activeChildren.filter((child) =>
           matchesTokens(identitySearchText(child.identity, options), tokens),
         );
   if (tokens.length > 0 && !groupMatches && children.length === 0) {

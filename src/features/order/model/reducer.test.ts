@@ -171,7 +171,7 @@ describe('order model reducer structure actions', () => {
 });
 
 describe('order model reducer active state and separators', () => {
-  it('removes top-level entries and group children when set inactive', () => {
+  it('keeps top-level entries and group children when set inactive', () => {
     const withExtra = modListReducer(baseModList(), {
       type: 'addModToGroup',
       groupId: 'group-required',
@@ -188,7 +188,10 @@ describe('order model reducer active state and separators', () => {
     expect(disabled.activeMods).toEqual(['a.core', 'c.extra']);
     expect(disabled.entries[2]).toMatchObject({
       kind: 'group',
-      entries: [{ id: 'child-c-extra', active: true }],
+      entries: [
+        { id: 'child-b', active: false },
+        { id: 'child-c-extra', active: true },
+      ],
     });
 
     const reenabled = modListReducer(disabled, {
@@ -197,9 +200,14 @@ describe('order model reducer active state and separators', () => {
       active: false,
     });
     expect(reenabled.activeMods).toEqual(['c.extra']);
+    expect(reenabled.entries[0]).toMatchObject({
+      kind: 'mod',
+      id: 'entry-a',
+      active: false,
+    });
   });
 
-  it('keeps a group when removing it from active by removing children', () => {
+  it('keeps a group when removing it from active by deactivating children', () => {
     const next = modListReducer(baseModList(), {
       type: 'setEntryActive',
       entryId: 'group-required',
@@ -210,9 +218,31 @@ describe('order model reducer active state and separators', () => {
     expect(next.entries[2]).toMatchObject({
       kind: 'group',
       id: 'group-required',
-      entries: [],
+      entries: [{ id: 'child-b', active: false }],
     });
     expect(next.activeMods).toEqual(['a.core']);
+  });
+
+  it('activates an inactive group at the requested active target instead of its old position', () => {
+    const inactive = modListReducer(baseModList(), {
+      type: 'setEntryActive',
+      entryId: 'group-required',
+      active: false,
+    });
+    const moved = modListReducer(inactive, {
+      type: 'moveEntriesAndSetActive',
+      entryIds: ['group-required'],
+      targetEntryId: 'entry-a',
+      edge: 'before',
+      active: true,
+    });
+
+    expect(moved.entries.map((entry) => entry.id)).toEqual(['group-required', 'entry-a', 'sep-1']);
+    expect(moved.entries[0]).toMatchObject({
+      kind: 'group',
+      entries: [{ id: 'child-b', active: true }],
+    });
+    expect(moved.activeMods).toEqual(['b.dep', 'a.core']);
   });
 
   it('inserts and renames separators without changing activeMods', () => {
@@ -233,7 +263,7 @@ describe('order model reducer active state and separators', () => {
 });
 
 describe('order model missing mod cleanup', () => {
-  it('classifies all missing structured entries as active', () => {
+  it('classifies missing structured entries by active state', () => {
     const current = baseModList([
       {
         kind: 'mod',
@@ -267,22 +297,25 @@ describe('order model missing mod cleanup', () => {
 
     const classified = classifyMissingEntries(current, catalogMods);
 
-    expect(classified.active).toEqual([
-      'missing.active',
-      'missing.inactive',
-      'missing.child',
-      'missing.inactive.child',
-    ]);
-    expect(classified.inactive).toEqual([]);
+    expect(classified.active).toEqual(['missing.active', 'missing.child']);
+    expect(classified.inactive).toEqual(['missing.inactive', 'missing.inactive.child']);
 
     const cleaned = removeMissingEntries(current, classified.active);
 
     expect(cleaned.entries).toMatchObject([
+      { kind: 'mod', id: 'entry-inactive-missing', active: false },
       { kind: 'separator', id: 'sep-1' },
       {
         kind: 'group',
         id: 'group-mixed',
-        entries: [{ id: 'child-installed', active: true, identity: { packageId: 'a.core' } }],
+        entries: [
+          { id: 'child-installed', active: true, identity: { packageId: 'a.core' } },
+          {
+            id: 'child-inactive-missing',
+            active: false,
+            identity: { packageId: 'missing.inactive.child' },
+          },
+        ],
       },
     ]);
     expect(cleaned.activeMods).toEqual(['a.core']);

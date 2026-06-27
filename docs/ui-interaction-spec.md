@@ -5,7 +5,7 @@
 `/order` 使用桌面工具式三栏布局：
 
 - 左栏是常驻元数据栏，跟随当前选中项实时刷新。
-- 中栏是未引入 mods。
+- 中栏是未启用 / 未引入 mods；其中 Group 是保留在模组列表草稿中的暂存结构。
 - 右栏是当前模组列表 entries，包括 mod、group 和 separator。
 
 主视图保持干净，不直接放置用于编辑的文本输入框。所有需要输入文本、确认破坏性操作或编辑实体属性的操作都进入二级界面。
@@ -50,9 +50,15 @@
 - Create Group from Selection。
 - Edit Display Alias。
 
+Inactive 中的结构化 Group / child ContextMenu：
+
+- Add to Active。
+- Rename Group（仅 Group）。
+- Edit Display Alias（仅 mod / child）。
+
 Active 列表的 mod ContextMenu：
 
-- Remove from Active。
+- Remove from Active（仅停用该 mod，保留结构化 entry 以便从 Inactive 恢复）。
 - Create Group from Selection。
 - Edit Display Alias。
 - Add Separator Above。
@@ -61,12 +67,12 @@ Group ContextMenu：
 
 - Rename Group。
 - Ungroup。
-- Remove Group。
+- Remove Group（停用该 Group 的 children，保留 Group 名称与组内顺序，以便从 Inactive 恢复）。
 
 Separator ContextMenu：
 
 - Rename Separator。
-- Delete Separator。
+- Delete Separator（真正删除 separator entry）。
 
 ## Dialog
 

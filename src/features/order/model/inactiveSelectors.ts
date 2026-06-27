@@ -16,7 +16,7 @@ import { identityForMod } from '@/features/order/identity';
 import { tagIdsForIdentity } from '@/features/tags/tagModel';
 import type { AvailableModSortKey, SortDirection } from '@/lib/availableMods';
 import type { InactiveRenderContext, InactiveRenderRow } from './inactiveSelectorsTypes';
-import { sortGroupBlocks, sortGroupChildren, sortOrdinaryRows } from './inactiveSorting';
+import { sortGroupBlocks, sortOrdinaryRows } from './inactiveSorting';
 import {
   entrySearchText,
   identitySearchText,
@@ -86,8 +86,7 @@ export function buildInactiveRenderRows(
   options: InactiveRenderOptions,
 ): InactiveRenderRow[] {
   const ctx = inactiveRenderContext(options);
-  ctx.catalogPackageIds = new Set(catalogMods.map((mod) => mod.packageId));
-  const structured = new Set(structuredPackageIds(entries, ctx.catalogPackageIds));
+  const structured = new Set(structuredPackageIds(entries));
   const groupBlocks: InactiveRenderRow[][] = [];
   const ordinaryRows: InactiveRenderRow[] = [];
   for (const entry of entries) {
@@ -156,8 +155,8 @@ function inactiveModEntryRenderRows(
   entry: Extract<ModListEntryDto, { kind: 'mod' }>,
   ctx: InactiveRenderContext,
 ): InactiveRenderRow[] {
+  if (entry.active !== false) return [];
   const missing = !ctx.searchOptions.modByPackageId.has(entry.identity.packageId);
-  if (!missing) return [];
   if (!ctx.hasTag(entry.identity)) return [];
   if (
     ctx.tokens.length > 0 &&
@@ -181,7 +180,7 @@ function inactiveGroupRenderRows(
   ctx: InactiveRenderContext,
 ): InactiveRenderRow[] {
   const groupMatches = matchesTokens(entry.name, ctx.tokens);
-  const children = sortGroupChildren(inactiveGroupChildren(entry, groupMatches, ctx), ctx);
+  const children = inactiveGroupChildren(entry, groupMatches, ctx);
   if (ctx.tokens.length > 0 && !groupMatches && children.length === 0) return [];
   if (children.length === 0) return [];
   return [
@@ -213,28 +212,20 @@ function inactiveGroupChildren(
   ctx: InactiveRenderContext,
 ): ModListGroupChildDto[] {
   return entry.entries.filter((child) => {
-    const missing = !ctx.searchOptions.modByPackageId.has(child.identity.packageId);
-    if (!missing) return false;
+    if (child.active !== false) return false;
     if (!ctx.hasTag(child.identity)) return false;
     if (ctx.tokens.length === 0 || groupMatches) return true;
     return matchesTokens(identitySearchText(child.identity, ctx.searchOptions), ctx.tokens);
   });
 }
 
-function structuredPackageIds(
-  entries: ModListEntryDto[],
-  catalogPackageIds: Set<string>,
-): string[] {
+function structuredPackageIds(entries: ModListEntryDto[]): string[] {
   return entries.flatMap((entry) => {
     if (entry.kind === 'mod') {
-      if (entry.active === false && catalogPackageIds.has(entry.identity.packageId)) return [];
       return [entry.identity.packageId];
     }
     if (entry.kind === 'group') {
-      return entry.entries.flatMap((child) => {
-        if (child.active === false && catalogPackageIds.has(child.identity.packageId)) return [];
-        return [child.identity.packageId];
-      });
+      return entry.entries.map((child) => child.identity.packageId);
     }
     return [];
   });

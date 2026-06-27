@@ -106,7 +106,7 @@ describe('order model drag actions basics', () => {
     });
   });
 
-  it('removes active entries when dropped onto the inactive panel', () => {
+  it('deactivates active entries when dropped onto the inactive panel', () => {
     const action = resolveDragAction(
       input({
         activeId: 'active:entry:entry-a',
@@ -117,14 +117,15 @@ describe('order model drag actions basics', () => {
     );
 
     expect(action).toEqual({
-      type: 'removeEntries',
+      type: 'setEntriesActive',
       entryIds: ['entry-a', 'group-required'],
+      active: false,
     });
   });
 });
 
 describe('order model inactive entry drag actions', () => {
-  it('ignores inactive structured entries dropped on active rows', () => {
+  it('activates inactive structured entries dropped on active rows at the drop target', () => {
     const action = resolveDragAction(
       input({
         activeId: 'inactive:entry:entry-a',
@@ -133,10 +134,16 @@ describe('order model inactive entry drag actions', () => {
       }),
     );
 
-    expect(action).toBeNull();
+    expect(action).toEqual({
+      type: 'moveEntriesAndSetActive',
+      entryIds: ['entry-a'],
+      targetEntryId: 'group-required',
+      edge: 'after',
+      active: true,
+    });
   });
 
-  it('ignores inactive structured entries dropped inside active groups', () => {
+  it('activates inactive mod entries dropped inside active groups', () => {
     const action = resolveDragAction(
       input({
         activeId: 'inactive:entry:entry-a',
@@ -145,10 +152,16 @@ describe('order model inactive entry drag actions', () => {
       }),
     );
 
-    expect(action).toBeNull();
+    expect(action).toEqual({
+      type: 'moveEntriesToGroupAndSetActive',
+      entryIds: ['entry-a'],
+      groupId: 'group-required',
+      index: 1,
+      active: true,
+    });
   });
 
-  it('ignores inactive structured group children dropped on active', () => {
+  it('activates inactive structured group children dropped on active', () => {
     const action = resolveDragAction(
       input({
         activeId: 'inactive:child:group-required:child-b',
@@ -156,7 +169,13 @@ describe('order model inactive entry drag actions', () => {
       }),
     );
 
-    expect(action).toBeNull();
+    expect(action).toEqual({
+      type: 'setGroupChildrenActiveAndMoveGroup',
+      groupId: 'group-required',
+      childIds: ['child-b'],
+      active: true,
+      index: 3,
+    });
   });
 });
 

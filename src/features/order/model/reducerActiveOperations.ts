@@ -1,5 +1,5 @@
 import type { ModListDto, ModListEntryDto } from '@/commands';
-import { moveManyByTarget } from './dnd';
+import { clampIndex, moveManyByTarget } from './dnd';
 import { groupChildFromEntry } from './entries';
 import { normalizeModList } from './normalize';
 import type { DropEdge, GroupEntry } from './types';
@@ -9,13 +9,12 @@ export function setEntriesActive(
   entryIds: string[],
   active: boolean,
 ): ModListDto {
-  if (active) return modList;
   const selected = new Set(entryIds);
   return normalizeModList({
     ...modList,
-    entries: modList.entries
-      .filter((entry) => !(selected.has(entry.id) && entry.kind === 'mod'))
-      .map((entry) => removeGroupChildrenForSelectedGroup(entry, selected)),
+    entries: modList.entries.map((entry) =>
+      selected.has(entry.id) ? setEntryActive(entry, active) : entry,
+    ),
   });
 }
 
@@ -27,9 +26,24 @@ export function moveEntriesAndSetActive(
   active: boolean,
 ): ModListDto {
   if (!active) return setEntriesActive(modList, entryIds, false);
+  const activated = entriesWithActiveState(modList.entries, new Set(entryIds), true);
   return normalizeModList({
     ...modList,
-    entries: moveManyByTarget(modList.entries, entryIds, targetEntryId, edge),
+    entries: moveManyByTarget(activated, entryIds, targetEntryId, edge),
+  });
+}
+
+export function moveEntriesToIndexAndSetActive(
+  modList: ModListDto,
+  entryIds: string[],
+  index: number,
+  active: boolean,
+): ModListDto {
+  const selected = new Set(entryIds);
+  const entries = entriesWithActiveState(modList.entries, selected, active);
+  return normalizeModList({
+    ...modList,
+    entries: moveManyToIndex(entries, entryIds, index),
   });
 }
 
@@ -68,20 +82,69 @@ export function setGroupChildrenActive(
   childIds: string[],
   active: boolean,
 ): ModListDto {
-  if (active) return modList;
   const selected = new Set(childIds);
   return updateGroup(modList, groupId, (group) => ({
     ...group,
-    entries: group.entries.filter((child) => !selected.has(child.id)),
+    entries: group.entries.map((child) => (selected.has(child.id) ? { ...child, active } : child)),
   }));
 }
 
-function removeGroupChildrenForSelectedGroup(
-  entry: ModListEntryDto,
+export function setGroupChildrenActiveAndMoveGroup(
+  modList: ModListDto,
+  groupId: string,
+  childIds: string[],
+  active: boolean,
+  target: { index?: number; targetEntryId?: string; edge?: Exclude<DropEdge, 'inside'> },
+): ModListDto {
+  const group = modList.entries.find(
+    (entry): entry is GroupEntry => entry.kind === 'group' && entry.id === groupId,
+  );
+  const wasInactive = group ? group.entries.every((child) => !child.active) : false;
+  const updated = setGroupChildrenActive(modList, groupId, childIds, active);
+  if (!active || !wasInactive) return updated;
+  if (target.targetEntryId && target.edge) {
+    return normalizeModList({
+      ...updated,
+      entries: moveManyByTarget(updated.entries, [groupId], target.targetEntryId, target.edge),
+    });
+  }
+  if (target.index == null) return updated;
+  return normalizeModList({
+    ...updated,
+    entries: moveManyToIndex(updated.entries, [groupId], target.index),
+  });
+}
+
+function entriesWithActiveState(
+  entries: ModListEntryDto[],
   selected: Set<string>,
-): ModListEntryDto {
-  if (entry.kind !== 'group' || !selected.has(entry.id)) return entry;
-  return { ...entry, entries: [] };
+  active: boolean,
+): ModListEntryDto[] {
+  return entries.map((entry) => (selected.has(entry.id) ? setEntryActive(entry, active) : entry));
+}
+
+function setEntryActive(entry: ModListEntryDto, active: boolean): ModListEntryDto {
+  if (entry.kind === 'mod') return { ...entry, active };
+  if (entry.kind === 'group') {
+    return {
+      ...entry,
+      entries: entry.entries.map((child) => ({ ...child, active })),
+    };
+  }
+  return entry;
+}
+
+function moveManyToIndex<T extends { id: string }>(
+  items: T[],
+  itemIds: string[],
+  index: number,
+): T[] {
+  const selected = new Set(itemIds);
+  const moving = items.filter((entry) => selected.has(entry.id));
+  if (moving.length === 0) return items;
+  const withoutMoving = items.filter((entry) => !selected.has(entry.id));
+  const insertIndex = clampIndex(index, withoutMoving.length);
+  return [...withoutMoving.slice(0, insertIndex), ...moving, ...withoutMoving.slice(insertIndex)];
 }
 
 function updateGroup(

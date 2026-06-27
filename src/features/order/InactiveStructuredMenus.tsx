@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type {
   ModIdentityDto,
@@ -30,6 +30,7 @@ export function InactiveEntryMenu({
   entry,
   sourceKey,
   onRenameGroup,
+  onAddActive,
   onEditAlias,
   onOpenModFolder,
   onOpenSteamWorkshopPage,
@@ -46,6 +47,7 @@ export function InactiveEntryMenu({
   entry: ModListEntryDto;
   sourceKey: string | null | undefined;
   onRenameGroup: (entryId: string, name: string) => void;
+  onAddActive: (entryId: string) => void;
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
@@ -54,6 +56,10 @@ export function InactiveEntryMenu({
   const { t } = useTranslation();
   return (
     <ContextMenuContent>
+      <ContextMenuItem onSelect={() => onAddActive(entry.id)}>
+        <Plus className="size-4" />
+        {t('order.context.addToActive')}
+      </ContextMenuItem>
       {entry.kind === 'group' ? (
         <ContextMenuItem onSelect={() => onRenameGroup(entry.id, entry.name)}>
           <Pencil className="size-4" />
@@ -85,6 +91,7 @@ export function InactiveEntryMenu({
 export function InactiveChildMenu({
   row,
   sourceKey,
+  onAddActive,
   onEditAlias,
   onOpenModFolder,
   onOpenSteamWorkshopPage,
@@ -100,13 +107,19 @@ export function InactiveChildMenu({
 }: {
   row: Extract<InactiveRenderRow, { kind: 'child' }>;
   sourceKey: string | null | undefined;
+  onAddActive: (groupId: string, childId: string) => void;
   onEditAlias: (identity: ModIdentityDto) => void;
   onOpenModFolder: (sourceKey: string) => void;
   onOpenSteamWorkshopPage: (sourceKey: string, target: SteamWorkshopOpenTarget) => void;
   modByPackageId: Map<string, ModMetadataDto>;
 } & TagMenuProps) {
+  const { t } = useTranslation();
   return (
     <ContextMenuContent>
+      <ContextMenuItem onSelect={() => onAddActive(row.groupId, row.child.id)}>
+        <Plus className="size-4" />
+        {t('order.context.addToActive')}
+      </ContextMenuItem>
       <ModEntryMenuItems
         identity={row.child.identity}
         sourceKey={sourceKey}

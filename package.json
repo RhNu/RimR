@@ -1,7 +1,7 @@
 {
   "name": "rimr",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "A RimWorld mod manager.",
   "author": "Rhynia",
   "license": "GPL-3.0",

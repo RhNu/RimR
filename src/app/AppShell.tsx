@@ -5,12 +5,15 @@ import { useAppOrderDialogActions } from '@/features/order/hooks/useAppOrderDial
 import { useOrderDraftStore } from '@/stores/orderDraftStore';
 import { windowClient } from '@/commands';
 import { AppMenuBar, type MenuId } from './AppMenuBar';
+import { ModCleanupDialog } from './ModCleanupDialog';
 import { TitleDragRegion, WindowControls } from './WindowControls';
 import { useFileMenuActions } from './useFileMenuActions';
+import { useToolsMenuActions } from './useToolsMenuActions';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const fileActions = useFileMenuActions();
+  const toolsActions = useToolsMenuActions();
   const draft = useOrderDraftStore((state) => state.draft);
   const modListMenu = useAppOrderDialogActions(draft ?? undefined);
 
@@ -28,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             openMenu={openMenu}
             setOpenMenu={setOpenMenu}
             fileActions={fileActions}
+            toolsActions={toolsActions}
             modListMenu={modListMenu}
           />
         </div>
@@ -45,6 +49,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppOrderDialogView
         onSubmit={modListMenu.onSubmit}
         canDeleteModList={modListMenu.canDelete}
+      />
+      <ModCleanupDialog
+        preview={toolsActions.cleanupPreview}
+        pending={toolsActions.isPending}
+        onConfirm={() => void toolsActions.confirmCleanup()}
+        onClose={toolsActions.closeCleanupDialog}
       />
       <main className="min-h-0 flex-1 overflow-auto">{children}</main>
     </div>

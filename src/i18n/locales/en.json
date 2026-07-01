@@ -2,6 +2,7 @@
   "menu": {
     "file": "File",
     "modList": "Mod List",
+    "tools": "Tools",
     "view": "View",
     "settings": "Settings",
     "help": "Help",
@@ -45,6 +46,24 @@
       "rimrDataDir": "RimR Data Directory",
       "rimrModListsDir": "RimR Mod Lists Directory",
       "rimrLogsDir": "RimR Logs Directory"
+    }
+  },
+  "tools": {
+    "cleanupTextureOnly": "Clean texture-only mods...",
+    "cleanupInvalid": "Clean invalid mods...",
+    "dialog": {
+      "title": "Clean mod folders",
+      "description": "Move {{count}} mod folder(s) to the recycle bin.",
+      "confirm": "Clean",
+      "fileCount": "{{count}} file(s)"
+    },
+    "reason": {
+      "textureOnlyInvalid": "Invalid mod containing only texture residue.",
+      "invalidMetadata": "Invalid mod metadata."
+    },
+    "toast": {
+      "noCandidates": "No mod folders matched this cleanup.",
+      "cleaned": "Cleaned {{cleaned}} mod folder(s); skipped {{skipped}}."
     }
   },
   "dialog": {

@@ -1,9 +1,10 @@
 use crate::app_config::default_data_dir;
+use crate::dto::CleanModsRequest;
 use crate::dto::{
     ActiveListLoadDto, CatalogSnapshotDto, ConfiguredDirectoryKind, LoadModFolderSizeRequest,
-    LoadModPreviewRequest, ModFolderSizeDto, ModPreviewDto, OpenConfiguredDirectoryRequest,
-    OpenModFolderRequest, OpenSteamWorkshopPageRequest, ValidateActiveOrderRequest,
-    ValidateOrderDto,
+    LoadModPreviewRequest, ModCleanupPreviewDto, ModCleanupPreviewRequest, ModCleanupResultDto,
+    ModFolderSizeDto, ModPreviewDto, OpenConfiguredDirectoryRequest, OpenModFolderRequest,
+    OpenSteamWorkshopPageRequest, ValidateActiveOrderRequest, ValidateOrderDto,
 };
 use crate::error::CommandResult;
 use crate::state::AppState;
@@ -38,6 +39,34 @@ pub async fn load_mod_folder_size(
     state.load_mod_folder_size(request).await.inspect_err(
         |e| tracing::error!(command = "load_mod_folder_size", error = ?e, "command failed"),
     )
+}
+
+#[tauri::command]
+pub async fn preview_mod_cleanup(
+    state: State<'_, AppState>,
+    request: ModCleanupPreviewRequest,
+) -> CommandResult<ModCleanupPreviewDto> {
+    tracing::info!(command = "preview_mod_cleanup", kind = ?request.kind, "command invoked");
+    state.preview_mod_cleanup(request).await.inspect_err(
+        |e| tracing::error!(command = "preview_mod_cleanup", error = ?e, "command failed"),
+    )
+}
+
+#[tauri::command]
+pub async fn clean_mods(
+    state: State<'_, AppState>,
+    request: CleanModsRequest,
+) -> CommandResult<ModCleanupResultDto> {
+    tracing::info!(
+        command = "clean_mods",
+        kind = ?request.kind,
+        source_keys = request.source_keys.len(),
+        "command invoked"
+    );
+    state
+        .clean_mods(request)
+        .await
+        .inspect_err(|e| tracing::error!(command = "clean_mods", error = ?e, "command failed"))
 }
 
 #[tauri::command]

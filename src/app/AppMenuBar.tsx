@@ -19,15 +19,18 @@ import { ModListMenu } from '@/features/order/ModListMenu';
 import { SUPPORTED_LOCALES_LIST, useLocaleStore, type Locale } from '@/stores/locale';
 import { useThemeStore } from '@/stores/theme';
 import { cn } from '@/lib/utils';
+import { TOOL_CLEANUP_ITEMS } from './toolsMenuModel';
 import type { useFileMenuActions } from './useFileMenuActions';
+import type { useToolsMenuActions } from './useToolsMenuActions';
 import type { useAppOrderDialogActions } from '@/features/order/hooks/useAppOrderDialogActions';
 
-export type MenuId = 'file' | 'modList' | 'view' | 'settings' | 'help';
+export type MenuId = 'file' | 'modList' | 'tools' | 'view' | 'settings' | 'help';
 
 type AppMenuBarProps = {
   openMenu: MenuId | null;
   setOpenMenu: (menu: MenuId | null) => void;
   fileActions: ReturnType<typeof useFileMenuActions>;
+  toolsActions: ReturnType<typeof useToolsMenuActions>;
   modListMenu: ReturnType<typeof useAppOrderDialogActions>;
 };
 
@@ -36,6 +39,7 @@ export function AppMenuBar(props: AppMenuBarProps) {
     <nav className="flex h-full items-center">
       <FileMenu {...props} />
       <ModListDesktopMenu {...props} />
+      <ToolsMenu {...props} />
       <ViewMenu {...props} />
       <SettingsMenu {...props} />
       <HelpMenu {...props} />
@@ -137,6 +141,23 @@ function ModListDesktopMenu({ openMenu, setOpenMenu, modListMenu }: AppMenuBarPr
           {t('order.state.modListNotLoaded')}
         </MenuItem>
       )}
+    </DesktopMenu>
+  );
+}
+
+function ToolsMenu({ openMenu, setOpenMenu, toolsActions }: AppMenuBarProps) {
+  const { t } = useTranslation();
+  return (
+    <DesktopMenu label={t('menu.tools')} id="tools" openMenu={openMenu} setOpenMenu={setOpenMenu}>
+      {TOOL_CLEANUP_ITEMS.map((item) => (
+        <MenuItem
+          key={item.kind}
+          disabled={toolsActions.isPending}
+          onSelect={() => void toolsActions.preview(item.kind)}
+        >
+          {t(item.labelKey)}
+        </MenuItem>
+      ))}
     </DesktopMenu>
   );
 }

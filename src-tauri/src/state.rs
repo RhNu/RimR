@@ -4,12 +4,14 @@ use crate::app_config::{
 };
 use crate::dto::{
     self, ActiveListLoadDto, ActiveListWriteDto, ApplyModListDto, ApplyModListRequest,
-    CatalogSnapshotDto, CreateModListRequest, DeleteModListRequest, ExportGameConfigBackupDto,
-    ExportGameConfigBackupRequest, ExportLibrarySettingsFileDto, ExportLibrarySettingsFileRequest,
-    ExportModListFileDto, ExportModListFileRequest, ImportGameConfigBackupDto,
-    ImportGameConfigBackupRequest, ImportLibrarySettingsFileRequest, ImportModListFileRequest,
-    LibraryDto, LibrarySettingsDto, LoadModFolderSizeRequest, LoadModPreviewRequest,
-    LoadPlayerLogRequest, LogEntryDto, LogLevelDto, LogSourceDto, ModFolderSizeDto, ModListDto,
+    CatalogSnapshotDto, CleanModsRequest, CreateModListRequest, DeleteModListRequest,
+    ExportGameConfigBackupDto, ExportGameConfigBackupRequest, ExportLibrarySettingsFileDto,
+    ExportLibrarySettingsFileRequest, ExportModListFileDto, ExportModListFileRequest,
+    ImportGameConfigBackupDto, ImportGameConfigBackupRequest, ImportLibrarySettingsFileRequest,
+    ImportModListFileRequest, LibraryDto, LibrarySettingsDto, LoadModFolderSizeRequest,
+    LoadModPreviewRequest, LoadPlayerLogRequest, LogEntryDto, LogLevelDto, LogSourceDto,
+    ModCleanupCandidateDto, ModCleanupKindDto, ModCleanupPreviewDto, ModCleanupPreviewRequest,
+    ModCleanupReasonDto, ModCleanupResultDto, ModCleanupSkippedDto, ModFolderSizeDto, ModListDto,
     ModListIndexDto, ModPreviewDto, OpenSteamWorkshopPageRequest, PlayerLogDto,
     SaveLibrarySettingsRequest, SaveModListRequest, SetCurrentModListRequest, SteamWorkshopLogDto,
     SteamWorkshopLogEntryDto, SteamWorkshopOpenTarget, ValidateActiveOrderRequest,
@@ -21,14 +23,15 @@ use crate::mod_file_info::{self, CachedModFolderSize, CachedModPreview};
 use crate::paths;
 use crate::source::{FsModSource, SourceRoots};
 use rimr_core::{
-    ActiveModList, AppClock, LibraryStore, ModCatalog, ModSourceKey, PackageId, RimrFileSerializer,
-    SourceKind, WorkspaceSession, create_mod_list, delete_mod_list, import_mod_list, load_library,
-    merge_library_settings as core_merge_library_settings, save_mod_list, set_current_mod_list,
+    ActiveModList, AppClock, LibraryStore, ModCatalog, ModMetadata, ModSourceKey, PackageId,
+    RimrFileSerializer, SourceKind, WorkspaceSession, create_mod_list, delete_mod_list,
+    import_mod_list, load_library, merge_library_settings as core_merge_library_settings,
+    save_mod_list, set_current_mod_list,
 };
 use rimr_steam::{
     WorkshopLinks, appworkshop_acf_path, parse_appworkshop_acf, workshop_file_id_from_mod_path,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
@@ -230,6 +233,104 @@ impl AppState {
             .mod_folder_sizes
             .insert(loaded.dto.source_key.clone(), loaded.cache);
         Ok(loaded.dto)
+    }
+
+    pub async fn preview_mod_cleanup(
+        &self,
+        request: ModCleanupPreviewRequest,
+    ) -> CommandResult<ModCleanupPreviewDto> {
+        tracing::info!(kind = ?request.kind, "previewing mod cleanup");
+        self.rebuild_mod_catalog().await?;
+        let (catalog, roots) = {
+            let state = self.read_state()?;
+            (
+                state.workspace.catalog().cloned().ok_or_else(|| {
+                    CommandError::new(CommandErrorCode::StateMissing, "catalog is not loaded")
+                })?,
+                canonical_source_roots_for_state(&state)?,
+            )
+        };
+        let candidates = cleanup_candidates(&catalog, request.kind, &roots).await?;
+        tracing::info!(
+            kind = ?request.kind,
+            candidates = candidates.len(),
+            "mod cleanup preview complete"
+        );
+        Ok(ModCleanupPreviewDto {
+            kind: request.kind,
+            candidates,
+        })
+    }
+
+    pub async fn clean_mods(
+        &self,
+        request: CleanModsRequest,
+    ) -> CommandResult<ModCleanupResultDto> {
+        tracing::info!(
+            kind = ?request.kind,
+            requested = request.source_keys.len(),
+            "cleaning mods"
+        );
+        let requested: Vec<String> = request.source_keys.into_iter().collect();
+        let requested_set: HashSet<String> = requested.iter().cloned().collect();
+        let (catalog, roots) = {
+            let state = self.read_state()?;
+            (
+                state.workspace.catalog().cloned().ok_or_else(|| {
+                    CommandError::new(CommandErrorCode::StateMissing, "catalog is not loaded")
+                })?,
+                canonical_source_roots_for_state(&state)?,
+            )
+        };
+
+        let eligible = cleanup_candidates(&catalog, request.kind, &roots)
+            .await?
+            .into_iter()
+            .filter(|candidate| requested_set.contains(&candidate.source_key))
+            .map(|candidate| (candidate.source_key.clone(), candidate))
+            .collect::<HashMap<_, _>>();
+
+        let mut cleaned = Vec::new();
+        let mut skipped = Vec::new();
+        for source_key in requested {
+            let Some(candidate) = eligible.get(&source_key).cloned() else {
+                let path = catalog
+                    .get_by_source_key(&ModSourceKey::new(source_key.as_str()))
+                    .map(|metadata| metadata.source_key.as_str().to_string());
+                skipped.push(ModCleanupSkippedDto {
+                    source_key,
+                    path,
+                    message: "mod is no longer eligible for cleanup".to_string(),
+                });
+                continue;
+            };
+
+            let path = PathBuf::from(&candidate.path);
+            match trash_mod_folder(path.clone()).await {
+                Ok(()) => cleaned.push(candidate),
+                Err(message) => skipped.push(ModCleanupSkippedDto {
+                    source_key,
+                    path: Some(path.to_string_lossy().into_owned()),
+                    message,
+                }),
+            }
+        }
+
+        if !cleaned.is_empty() {
+            self.clear_session_cache()?;
+        }
+
+        tracing::info!(
+            kind = ?request.kind,
+            cleaned = cleaned.len(),
+            skipped = skipped.len(),
+            "mod cleanup complete"
+        );
+        Ok(ModCleanupResultDto {
+            kind: request.kind,
+            cleaned,
+            skipped,
+        })
     }
 
     pub async fn load_active_list(&self) -> CommandResult<ActiveListLoadDto> {
@@ -937,6 +1038,137 @@ impl AppState {
             )
         })
     }
+}
+
+async fn cleanup_candidates(
+    catalog: &ModCatalog,
+    kind: ModCleanupKindDto,
+    roots: &CanonicalSourceRoots,
+) -> CommandResult<Vec<ModCleanupCandidateDto>> {
+    let mut candidates = Vec::new();
+    for (_, metadata) in catalog.iter() {
+        if let Some(candidate) = cleanup_candidate(metadata, kind, roots).await? {
+            candidates.push(candidate);
+        }
+    }
+    candidates.sort_by(|a, b| a.path.cmp(&b.path));
+    Ok(candidates)
+}
+
+async fn cleanup_candidate(
+    metadata: &ModMetadata,
+    kind: ModCleanupKindDto,
+    roots: &CanonicalSourceRoots,
+) -> CommandResult<Option<ModCleanupCandidateDto>> {
+    if metadata.valid {
+        return Ok(None);
+    }
+    if !matches!(
+        metadata.source_kind,
+        SourceKind::Local | SourceKind::Workshop
+    ) {
+        return Ok(None);
+    }
+
+    let mod_path = PathBuf::from(metadata.source_key.as_str());
+    ensure_mod_path_in_roots(&mod_path, roots)?;
+    let file_count = match kind {
+        ModCleanupKindDto::Invalid => count_regular_files(mod_path.clone()).await?,
+        ModCleanupKindDto::TextureOnlyInvalid => {
+            let Some(file_count) = texture_only_file_count(mod_path.clone()).await? else {
+                return Ok(None);
+            };
+            file_count
+        }
+    };
+
+    Ok(Some(ModCleanupCandidateDto {
+        source_key: metadata.source_key.as_str().to_string(),
+        source_kind: dto::source_kind(metadata.source_kind),
+        path: mod_path.to_string_lossy().into_owned(),
+        package_id: metadata.package_id.as_str().to_string(),
+        name: metadata.name.as_deref().map(str::to_string),
+        reason: match kind {
+            ModCleanupKindDto::TextureOnlyInvalid => ModCleanupReasonDto::TextureOnlyInvalid,
+            ModCleanupKindDto::Invalid => ModCleanupReasonDto::InvalidMetadata,
+        },
+        file_count,
+    }))
+}
+
+async fn count_regular_files(path: PathBuf) -> CommandResult<u64> {
+    tokio::task::spawn_blocking(move || count_regular_files_blocking(&path))
+        .await
+        .map_err(|error| CommandError::new(CommandErrorCode::Internal, error.to_string()))?
+        .map_err(command_source_io)
+}
+
+async fn texture_only_file_count(path: PathBuf) -> CommandResult<Option<u64>> {
+    tokio::task::spawn_blocking(move || texture_only_file_count_blocking(&path))
+        .await
+        .map_err(|error| CommandError::new(CommandErrorCode::Internal, error.to_string()))?
+        .map_err(command_source_io)
+}
+
+fn count_regular_files_blocking(path: &Path) -> std::io::Result<u64> {
+    let mut count = 0;
+    let mut stack = vec![path.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir)? {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+            if file_type.is_dir() {
+                stack.push(entry.path());
+            } else if file_type.is_file() {
+                count += 1;
+            }
+        }
+    }
+    Ok(count)
+}
+
+fn texture_only_file_count_blocking(path: &Path) -> std::io::Result<Option<u64>> {
+    let mut count = 0;
+    let mut stack = vec![path.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir)? {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+            if file_type.is_symlink() {
+                return Ok(None);
+            }
+            if file_type.is_dir() {
+                stack.push(entry.path());
+            } else if file_type.is_file() {
+                if !is_texture_residue_file(&entry.path()) {
+                    return Ok(None);
+                }
+                count += 1;
+            } else {
+                return Ok(None);
+            }
+        }
+    }
+    Ok((count > 0).then_some(count))
+}
+
+fn is_texture_residue_file(path: &Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| {
+            extension.eq_ignore_ascii_case("dds") || extension.eq_ignore_ascii_case("zstd")
+        })
+}
+
+async fn trash_mod_folder(path: PathBuf) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || trash::delete(&path))
+        .await
+        .map_err(|error| error.to_string())?
+        .map_err(|error| error.to_string())
+}
+
+fn command_source_io(error: std::io::Error) -> CommandError {
+    CommandError::new(CommandErrorCode::SourceIo, error.to_string())
 }
 
 #[derive(Debug, Clone)]

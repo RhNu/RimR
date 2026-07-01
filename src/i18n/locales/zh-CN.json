@@ -2,6 +2,7 @@
   "menu": {
     "file": "文件",
     "modList": "模组列表",
+    "tools": "工具",
     "view": "视图",
     "settings": "设置",
     "help": "帮助",
@@ -45,6 +46,24 @@
       "rimrDataDir": "RimR 数据目录",
       "rimrModListsDir": "RimR 模组列表目录",
       "rimrLogsDir": "RimR 日志目录"
+    }
+  },
+  "tools": {
+    "cleanupTextureOnly": "清理仅存在贴图的模组...",
+    "cleanupInvalid": "清理无效模组...",
+    "dialog": {
+      "title": "清理模组文件夹",
+      "description": "将 {{count}} 个模组文件夹移入回收站。",
+      "confirm": "清理",
+      "fileCount": "{{count}} 个文件"
+    },
+    "reason": {
+      "textureOnlyInvalid": "无效模组，且只包含残留贴图文件。",
+      "invalidMetadata": "无效模组元数据。"
+    },
+    "toast": {
+      "noCandidates": "没有匹配的模组文件夹。",
+      "cleaned": "已清理 {{cleaned}} 个模组文件夹；跳过 {{skipped}} 个。"
     }
   },
   "dialog": {

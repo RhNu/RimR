@@ -20,10 +20,14 @@ import type {
   ImportLibrarySettingsFileRequest,
   ImportModListFileRequest,
   LibrarySettingsDto,
+  CleanModsRequest,
   LoadModFolderSizeRequest,
   LoadModPreviewRequest,
   LoadPlayerLogRequest,
   LibraryDto,
+  ModCleanupPreviewDto,
+  ModCleanupPreviewRequest,
+  ModCleanupResultDto,
   ModFolderSizeDto,
   ModListDto,
   ModListIndexDto,
@@ -73,6 +77,14 @@ type CommandContracts = {
   load_mod_folder_size: {
     args: { request: LoadModFolderSizeRequest };
     result: ModFolderSizeDto;
+  };
+  preview_mod_cleanup: {
+    args: { request: ModCleanupPreviewRequest };
+    result: ModCleanupPreviewDto;
+  };
+  clean_mods: {
+    args: { request: CleanModsRequest };
+    result: ModCleanupResultDto;
   };
   open_mod_folder: {
     args: { request: OpenModFolderRequest };
@@ -212,6 +224,9 @@ export const rimrClient = {
     invokeCommand('load_mod_preview', { request }),
   loadModFolderSize: (request: LoadModFolderSizeRequest) =>
     invokeCommand('load_mod_folder_size', { request }),
+  previewModCleanup: (request: ModCleanupPreviewRequest) =>
+    invokeCommand('preview_mod_cleanup', { request }),
+  cleanMods: (request: CleanModsRequest) => invokeCommand('clean_mods', { request }),
   openModFolder: (request: OpenModFolderRequest) => invokeCommand('open_mod_folder', { request }),
   openConfiguredDirectory: (request: OpenConfiguredDirectoryRequest) =>
     invokeCommand('open_configured_directory', { request }),

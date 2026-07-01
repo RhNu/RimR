@@ -21,6 +21,8 @@ pub fn handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool {
         rebuild_mod_catalog,
         load_mod_preview,
         load_mod_folder_size,
+        preview_mod_cleanup,
+        clean_mods,
         load_active_list,
         validate_active_order,
         load_library,

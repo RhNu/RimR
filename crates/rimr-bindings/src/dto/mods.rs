@@ -105,6 +105,77 @@ pub struct ModFolderSizeDto {
     pub folder_size_bytes: u64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum ModCleanupKindDto {
+    TextureOnlyInvalid,
+    Invalid,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub enum ModCleanupReasonDto {
+    TextureOnlyInvalid,
+    InvalidMetadata,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct ModCleanupCandidateDto {
+    pub source_key: String,
+    pub source_kind: SourceKindDto,
+    pub path: String,
+    pub package_id: String,
+    pub name: Option<String>,
+    pub reason: ModCleanupReasonDto,
+    #[ts(type = "number")]
+    pub file_count: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct ModCleanupPreviewRequest {
+    pub kind: ModCleanupKindDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct ModCleanupPreviewDto {
+    pub kind: ModCleanupKindDto,
+    pub candidates: Vec<ModCleanupCandidateDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct CleanModsRequest {
+    pub kind: ModCleanupKindDto,
+    pub source_keys: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct ModCleanupSkippedDto {
+    pub source_key: String,
+    pub path: Option<String>,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(rename_all = "camelCase")]
+pub struct ModCleanupResultDto {
+    pub kind: ModCleanupKindDto,
+    pub cleaned: Vec<ModCleanupCandidateDto>,
+    pub skipped: Vec<ModCleanupSkippedDto>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(rename_all = "camelCase")]

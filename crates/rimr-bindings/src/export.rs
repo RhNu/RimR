@@ -1,16 +1,18 @@
 use crate::app_config::{AppConfig, Locale, PathsConfig, Theme, UiConfig};
 use crate::dto::{
-    ActiveListLoadDto, ApplyModListDto, ApplyModListRequest, CatalogSnapshotDto, CommandError,
-    CommandErrorCode, ConfiguredDirectoryKind, CreateModListRequest, DeleteModListRequest,
-    DependencyDto, DependencyGraphDto, DiagnosticCodeDto, DiagnosticDto, DiagnosticLocationDto,
-    DisplayAliasDto, DuplicatePackageIdDto, EdgeDto, EdgeKindDto, EdgeSourceDto,
-    ExportGameConfigBackupDto, ExportGameConfigBackupRequest, ExportLibrarySettingsFileDto,
-    ExportLibrarySettingsFileRequest, ExportModListFileDto, ExportModListFileRequest,
-    GameConfigBackupDto, GameConfigBackupMetaDto, ImportGameConfigBackupDto,
-    ImportGameConfigBackupRequest, ImportLibrarySettingsFileRequest, ImportModListFileRequest,
-    IncompatibilityDto, LibraryDto, LibrarySettingsDto, LibrarySettingsFileDto,
-    LoadModFolderSizeRequest, LoadModPreviewRequest, LoadPlayerLogRequest, LogEntryDto,
-    LogLevelDto, LogSourceDto, ModCatalogDto, ModFolderSizeDto, ModIdentityDto, ModListDto,
+    ActiveListLoadDto, ApplyModListDto, ApplyModListRequest, CatalogSnapshotDto, CleanModsRequest,
+    CommandError, CommandErrorCode, ConfiguredDirectoryKind, CreateModListRequest,
+    DeleteModListRequest, DependencyDto, DependencyGraphDto, DiagnosticCodeDto, DiagnosticDto,
+    DiagnosticLocationDto, DisplayAliasDto, DuplicatePackageIdDto, EdgeDto, EdgeKindDto,
+    EdgeSourceDto, ExportGameConfigBackupDto, ExportGameConfigBackupRequest,
+    ExportLibrarySettingsFileDto, ExportLibrarySettingsFileRequest, ExportModListFileDto,
+    ExportModListFileRequest, GameConfigBackupDto, GameConfigBackupMetaDto,
+    ImportGameConfigBackupDto, ImportGameConfigBackupRequest, ImportLibrarySettingsFileRequest,
+    ImportModListFileRequest, IncompatibilityDto, LibraryDto, LibrarySettingsDto,
+    LibrarySettingsFileDto, LoadModFolderSizeRequest, LoadModPreviewRequest, LoadPlayerLogRequest,
+    LogEntryDto, LogLevelDto, LogSourceDto, ModCatalogDto, ModCleanupCandidateDto,
+    ModCleanupKindDto, ModCleanupPreviewDto, ModCleanupPreviewRequest, ModCleanupReasonDto,
+    ModCleanupResultDto, ModCleanupSkippedDto, ModFolderSizeDto, ModIdentityDto, ModListDto,
     ModListEntryDto, ModListFileDto, ModListGroupChildDto, ModListIndexDto, ModListSummaryDto,
     ModMetadataDto, ModPreviewDto, ModTagBindingDto, ModsConfigDto, OpenConfiguredDirectoryRequest,
     OpenModFolderRequest, OpenSteamWorkshopPageRequest, PlayerLogDto, ReadSaveModIdsDto,
@@ -47,6 +49,14 @@ pub fn generate_typescript() -> String {
     push::<ModPreviewDto>(&cfg, &mut out);
     push::<LoadModFolderSizeRequest>(&cfg, &mut out);
     push::<ModFolderSizeDto>(&cfg, &mut out);
+    push::<ModCleanupKindDto>(&cfg, &mut out);
+    push::<ModCleanupReasonDto>(&cfg, &mut out);
+    push::<ModCleanupCandidateDto>(&cfg, &mut out);
+    push::<ModCleanupPreviewRequest>(&cfg, &mut out);
+    push::<ModCleanupPreviewDto>(&cfg, &mut out);
+    push::<CleanModsRequest>(&cfg, &mut out);
+    push::<ModCleanupSkippedDto>(&cfg, &mut out);
+    push::<ModCleanupResultDto>(&cfg, &mut out);
     push::<OpenModFolderRequest>(&cfg, &mut out);
     push::<OpenConfiguredDirectoryRequest>(&cfg, &mut out);
     push::<ConfiguredDirectoryKind>(&cfg, &mut out);

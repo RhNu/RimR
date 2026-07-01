@@ -41,6 +41,22 @@ export type LoadModFolderSizeRequest = { sourceKey: string, };
 
 export type ModFolderSizeDto = { sourceKey: string, folderSizeBytes: number, };
 
+export type ModCleanupKindDto = "textureOnlyInvalid" | "invalid";
+
+export type ModCleanupReasonDto = "textureOnlyInvalid" | "invalidMetadata";
+
+export type ModCleanupCandidateDto = { sourceKey: string, sourceKind: SourceKindDto, path: string, packageId: string, name: string | null, reason: ModCleanupReasonDto, fileCount: number, };
+
+export type ModCleanupPreviewRequest = { kind: ModCleanupKindDto, };
+
+export type ModCleanupPreviewDto = { kind: ModCleanupKindDto, candidates: Array<ModCleanupCandidateDto>, };
+
+export type CleanModsRequest = { kind: ModCleanupKindDto, sourceKeys: Array<string>, };
+
+export type ModCleanupSkippedDto = { sourceKey: string, path: string | null, message: string, };
+
+export type ModCleanupResultDto = { kind: ModCleanupKindDto, cleaned: Array<ModCleanupCandidateDto>, skipped: Array<ModCleanupSkippedDto>, };
+
 export type OpenModFolderRequest = { sourceKey: string, };
 
 export type OpenConfiguredDirectoryRequest = { kind: ConfiguredDirectoryKind, };

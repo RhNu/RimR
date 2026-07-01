@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { baseModList, catalogMods } from './testFixtures';
+import { baseModList, catalogMods, mod } from './testFixtures';
 import { computeDropIntent } from './dnd';
 import { resolveDragAction, sameDropIndicator, type ResolveDragActionInput } from './dragActions';
 import { modListReducer } from './reducer';
+import { catalogItemKey } from './catalogItemKey';
 
 describe('sameDropIndicator', () => {
   it('compares drop indicators by target and edge', () => {
@@ -54,12 +55,30 @@ describe('order model drag actions basics', () => {
 
   it('adds inactive mods to the active list drop zone', () => {
     expect(
-      resolveDragAction(input({ activeId: 'inactive:catalog:c.extra', overId: 'active-drop' })),
+      resolveDragAction(
+        input({ activeId: 'inactive:catalog:package:c.extra', overId: 'active-drop' }),
+      ),
     ).toMatchObject({
       type: 'addMods',
       mods: [{ packageId: 'c.extra' }],
       index: 3,
     });
+  });
+
+  it('ignores invalid inactive catalog drops onto active targets', () => {
+    const invalid = mod('missing.packageid', 'Broken', {
+      sourceKey: 'local:/mods/broken',
+      valid: false,
+    });
+    const action = resolveDragAction(
+      input({
+        activeId: 'inactive:catalog:source:local:/mods/broken',
+        modByCatalogKey: new Map([['source:local:/mods/broken', invalid]]),
+        inactivePackageIds: ['source:local:/mods/broken'],
+      }),
+    );
+
+    expect(action).toBeNull();
   });
 
   it('moves selected top-level mod entries into a group when dropped inside the group row', () => {
@@ -181,12 +200,13 @@ describe('order model inactive entry drag actions', () => {
 
 function input(overrides: Partial<ResolveDragActionInput>): ResolveDragActionInput {
   return {
-    activeId: 'inactive:catalog:c.extra',
+    activeId: 'inactive:catalog:package:c.extra',
     overId: 'active-drop',
     modList: baseModList(),
     modByPackageId: new Map(catalogMods.map((item) => [item.packageId, item])),
+    modByCatalogKey: new Map(catalogMods.map((item) => [catalogItemKey(item), item])),
     selectedInactivePackageIds: new Set(),
-    inactivePackageIds: ['c.extra'],
+    inactivePackageIds: ['package:c.extra'],
     selectedEntryIds: new Set(),
     visibleActiveEntryIds: ['entry-a', 'group-required'],
     dropIndicator: null,

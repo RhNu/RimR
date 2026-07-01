@@ -102,7 +102,35 @@ describe('order model render selectors', () => {
       ),
     ).toEqual(['owlchemist.wallutilities']);
   });
+});
 
+describe('order model invalid catalog selectors', () => {
+  it('renders invalid catalog mods with source-key based row ids', () => {
+    const invalidMods = [
+      mod('missing.packageid', 'Broken One', {
+        sourceKey: 'local:/mods/broken-one',
+        valid: false,
+      }),
+      mod('missing.packageid', 'Broken Two', {
+        sourceKey: 'local:/mods/broken-two',
+        valid: false,
+        dataMalformed: true,
+      }),
+    ];
+    const rows = buildInactiveRenderRows([], invalidMods, {
+      search: searchFor('', invalidMods),
+      aliases: [],
+      modByPackageId: new Map(),
+    });
+
+    expect(rows.map((row) => row.id)).toEqual([
+      'inactive:catalog:source:local:/mods/broken-one',
+      'inactive:catalog:source:local:/mods/broken-two',
+    ]);
+  });
+});
+
+describe('order model render selectors', () => {
   it('builds active render rows that keep a matching group with matching children', () => {
     const rows = buildActiveRenderRows(baseEntries(), {
       query: 'dep',
@@ -179,7 +207,7 @@ describe('order model render selectors', () => {
       'inactive:entry:group-mixed',
       'inactive:child:group-mixed:child-inactive',
       'inactive:child:group-mixed:child-missing',
-      'inactive:catalog:c.extra',
+      'inactive:catalog:package:c.extra',
     ]);
     expect(rows[1]).toMatchObject({ kind: 'child', missing: false });
     expect(rows[2]).toMatchObject({ kind: 'child', missing: true });
@@ -215,7 +243,7 @@ describe('order model inactive render sorting', () => {
     );
 
     expect(rows.map((row) => row.id)).toEqual([
-      'inactive:catalog:a.core',
+      'inactive:catalog:package:a.core',
       'inactive:entry:entry-z',
     ]);
   });
@@ -269,8 +297,8 @@ describe('order model inactive render sorting', () => {
       'inactive:child:group-hot:child-c',
       'inactive:entry:group-cold',
       'inactive:child:group-cold:child-b',
-      'inactive:catalog:m.mid',
-      'inactive:catalog:z.low',
+      'inactive:catalog:package:m.mid',
+      'inactive:catalog:package:z.low',
       'inactive:entry:entry-missing',
     ]);
   });

@@ -1,3 +1,4 @@
+export * from './catalogItemKey';
 export * from './dnd';
 export * from './diff';
 export * from './dialogSubmit';

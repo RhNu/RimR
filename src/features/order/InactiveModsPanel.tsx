@@ -16,6 +16,8 @@ import { InactivePanelActions } from '@/features/order/InactivePanelActions';
 import { InactiveChildRow, InactiveEntryRow } from '@/features/order/InactiveStructuredRows';
 import {
   canCreateInactiveGroup,
+  catalogItemKey,
+  isPackageAddressableMod,
   selectedActiveModIdentities,
   selectedInactiveModIdentities,
   tagTargetsForEntry,
@@ -41,6 +43,7 @@ type RowProps = {
   tagDefs: TagDefDto[];
   modTags: ModTagBindingDto[];
   selectedPackageIds: Set<string>;
+  selectedPackageAddressableKeys: Set<string>;
   modByPackageId: Map<string, ModMetadataDto>;
   onSelect: (mod: ModMetadataDto, event: MouseEvent<HTMLButtonElement>) => void;
   onSelectEntry: (
@@ -84,11 +87,16 @@ export function InactiveModsPanel() {
   const tagDefs = library.data?.settings.tagDefs ?? [];
   const modTags = library.data?.settings.modTags ?? [];
   const tagTargets = useInactiveTagTargets(derived, selection);
+  const selectedPackageAddressableKeys = useSelectedPackageAddressableKeys(
+    derived,
+    selection.selectedInactivePackageIds,
+  );
   const rowProps: RowProps = {
     aliases,
     tagDefs,
     modTags,
     selectedPackageIds: selection.selectedInactivePackageIds,
+    selectedPackageAddressableKeys,
     modByPackageId: derived.modByPackageId,
     onSelect: selection.selectInactiveMod,
     onSelectEntry: selection.selectActiveEntry,
@@ -173,6 +181,8 @@ function CatalogInactivePanelRow({
   ...props
 }: InactivePanelRowProps & { row: Extract<InactiveRenderRow, { kind: 'catalog' }> }) {
   const identity = identityForMod(row.mod);
+  const itemKey = catalogItemKey(row.mod);
+  const canAdd = isPackageAddressableMod(row.mod);
   return (
     <InactiveModRow
       mod={row.mod}
@@ -180,8 +190,9 @@ function CatalogInactivePanelRow({
       tagDefs={props.tagDefs}
       modTags={props.modTags}
       tagTargetIdentities={tagTargetsForIdentity(identity, selectedInactiveTagIdentities)}
-      selected={props.selectedPackageIds.has(row.mod.packageId)}
-      canCreateGroup={canCreateInactiveGroup(props.selectedPackageIds)}
+      selected={props.selectedPackageIds.has(itemKey)}
+      canAdd={canAdd}
+      canCreateGroup={canCreateInactiveGroup(props.selectedPackageAddressableKeys)}
       onWarmFileInfo={props.onWarmFileInfo}
       onSelect={props.onSelect}
       onContextOpen={props.onContextOpen}
@@ -278,4 +289,21 @@ function useInactiveTagTargets(
     [derived.activeRows, selection.selectedEntryIds],
   );
   return { inactive, active };
+}
+
+function useSelectedPackageAddressableKeys(
+  derived: ReturnType<typeof useOrderWorkspaceDerived>,
+  selectedCatalogKeys: Set<string>,
+): Set<string> {
+  return useMemo(
+    () =>
+      new Set(
+        derived.sortedInactiveMods
+          .filter(
+            (mod) => selectedCatalogKeys.has(catalogItemKey(mod)) && isPackageAddressableMod(mod),
+          )
+          .map(catalogItemKey),
+      ),
+    [derived.sortedInactiveMods, selectedCatalogKeys],
+  );
 }

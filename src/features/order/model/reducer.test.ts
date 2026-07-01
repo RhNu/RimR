@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogMods, baseModList } from './testFixtures';
+import { catalogMods, baseModList, mod } from './testFixtures';
 import { flattenModListEntries } from './normalize';
 import {
   classifyMissingEntries,
@@ -47,6 +47,22 @@ describe('order model reducer basics', () => {
       identity: { packageId: 'c.extra' },
     });
     expect(next.activeMods).toEqual(['a.core', 'c.extra', 'b.dep']);
+  });
+
+  it('skips invalid catalog mods when adding to active structures', () => {
+    const invalid = mod('missing.packageid', 'Broken', {
+      sourceKey: 'local:/mods/broken',
+      valid: false,
+    });
+
+    const next = modListReducer(baseModList(), {
+      type: 'addMods',
+      mods: [invalid, catalogMods[2]],
+      index: 1,
+    });
+
+    expect(next.activeMods).toEqual(['a.core', 'c.extra', 'b.dep']);
+    expect(flattenModListEntries(next.entries)).not.toContain('missing.packageid');
   });
 
   it('removes top-level entries and preserves empty groups after child removal', () => {

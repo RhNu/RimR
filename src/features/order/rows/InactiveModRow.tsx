@@ -16,7 +16,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
-import { inactiveSortableId } from '@/features/order/dndIds';
+import { inactiveSortableIdForMod } from '@/features/order/dndIds';
 import { ModTypeIcon } from '@/components/mod/ModTypeIcon';
 import { OpenModActionsMenuItems } from '@/features/order/OpenModActionsMenuItems';
 import { TagColorBar } from '@/features/tags/TagColorBar';
@@ -35,6 +35,7 @@ type InactiveModRowProps = {
   onSelect: (mod: ModMetadataDto, event: MouseEvent<HTMLButtonElement>) => void;
   onContextOpen: (mod: ModMetadataDto) => void;
   onAdd: (mod: ModMetadataDto) => void;
+  canAdd: boolean;
   canCreateGroup: boolean;
   onCreateGroup: () => void;
   onEditAlias: (mod: ModMetadataDto) => void;
@@ -60,6 +61,7 @@ export const InactiveModRow = memo(function InactiveModRow({
   onSelect,
   onContextOpen,
   onAdd,
+  canAdd,
   canCreateGroup,
   onCreateGroup,
   onEditAlias,
@@ -75,7 +77,7 @@ export const InactiveModRow = memo(function InactiveModRow({
   onDoubleClick,
 }: InactiveModRowProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: inactiveSortableId(mod.packageId),
+    id: inactiveSortableIdForMod(mod),
   });
   return (
     <ContextMenu onOpenChange={(open) => open && onContextOpen(mod)}>
@@ -83,7 +85,7 @@ export const InactiveModRow = memo(function InactiveModRow({
         <div
           ref={setNodeRef}
           onPointerEnter={() => onWarmFileInfo(mod.sourceKey)}
-          onDoubleClick={() => onDoubleClick(mod)}
+          onDoubleClick={() => canAdd && onDoubleClick(mod)}
           className={rowClassName(selected, isDragging)}
           {...attributes}
           {...listeners}
@@ -106,6 +108,7 @@ export const InactiveModRow = memo(function InactiveModRow({
         tagDefs={tagDefs}
         modTags={modTags}
         tagTargetIdentities={tagTargetIdentities}
+        canAdd={canAdd}
         canCreateGroup={canCreateGroup}
         onAdd={onAdd}
         onCreateGroup={onCreateGroup}
@@ -128,6 +131,7 @@ function InactiveModContextMenu({
   tagDefs,
   modTags,
   tagTargetIdentities,
+  canAdd,
   canCreateGroup,
   onAdd,
   onCreateGroup,
@@ -146,6 +150,7 @@ function InactiveModContextMenu({
   | 'tagDefs'
   | 'modTags'
   | 'tagTargetIdentities'
+  | 'canAdd'
   | 'canCreateGroup'
   | 'onAdd'
   | 'onCreateGroup'
@@ -164,7 +169,7 @@ function InactiveModContextMenu({
   const targetIdentities = tagTargetIdentities.length > 0 ? tagTargetIdentities : [identity];
   return (
     <ContextMenuContent>
-      <ContextMenuItem onSelect={() => onAdd(mod)}>
+      <ContextMenuItem disabled={!canAdd} onSelect={() => onAdd(mod)}>
         <Plus className="size-4" />
         {t('order.context.addToActive')}
       </ContextMenuItem>

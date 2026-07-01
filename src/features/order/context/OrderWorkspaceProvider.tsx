@@ -111,7 +111,7 @@ function useOrderWorkspaceCore(data: OrderData): OrderWorkspaceCore {
   const validation = useOrderValidation(draftState.draft, data.scan.data);
   const derived = useDerivedWithDiff(data, draftState, validation, filters);
   const selection = useOrderSelection({
-    inactivePackageIds: derived.inactivePackageIds,
+    inactivePackageIds: derived.inactiveCatalogKeys,
     inactiveSourceKeys: derived.inactiveSourceKeys,
     visibleActiveEntryIds: derived.visibleActiveEntryIds,
     activeSourceKeys: derived.activeSourceKeys,

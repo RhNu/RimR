@@ -64,7 +64,7 @@ function compareIdentities(
       ? compareNumber(identityModifiedAt(a, ctx), identityModifiedAt(b, ctx))
       : compareText(identitySortText(a, ctx), identitySortText(b, ctx));
   if (primary !== 0) return primary * sortMultiplier(ctx);
-  return compareText(a.packageId, b.packageId);
+  return compareText(a.packageId, b.packageId) || compareText(a.sourceKey ?? '', b.sourceKey ?? '');
 }
 
 function rowIdentity(row: InactiveRenderRow): ModIdentityDto {

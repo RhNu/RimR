@@ -1,4 +1,5 @@
 import type { ModMetadataDto, ModListDto, ModListEntryDto } from '@/commands';
+import { catalogItemKey } from '@/features/order/model/catalogItemKey';
 
 export type DndSide = 'active' | 'inactive';
 
@@ -10,8 +11,12 @@ export function inactiveSortableId(packageId: string): string {
   return inactiveCatalogSortableId(packageId);
 }
 
-export function inactiveCatalogSortableId(packageId: string): string {
-  return `inactive:catalog:${packageId}`;
+export function inactiveSortableIdForMod(mod: ModMetadataDto): string {
+  return inactiveCatalogSortableId(catalogItemKey(mod));
+}
+
+export function inactiveCatalogSortableId(itemKey: string): string {
+  return `inactive:catalog:${itemKey}`;
 }
 
 export function groupSortableId(groupId: string): string {
@@ -44,12 +49,12 @@ export function parseEntryId(id: string): { side: DndSide; entryId: string } | n
   return { side: parts[0], entryId: parts.slice(2).join(':') };
 }
 
-export function parseCatalogId(id: string): { packageId: string } | null {
+export function parseCatalogId(id: string): { catalogKey: string } | null {
   const parts = id.split(':');
   if (parts.length < 3 || parts[0] !== 'inactive' || parts[1] !== 'catalog') {
     return null;
   }
-  return { packageId: parts.slice(2).join(':') };
+  return { catalogKey: parts.slice(2).join(':') };
 }
 
 export function entryIndex(modList: ModListDto, entryId: string): number {
@@ -75,7 +80,7 @@ export function labelForDragId(
 ): string {
   const catalog = parseCatalogId(id);
   if (catalog) {
-    const packageId = catalog.packageId;
+    const packageId = catalog.catalogKey.replace(/^package:/, '');
     return modByPackageId.get(packageId)?.name ?? packageId;
   }
   const entryId = parseEntryId(id);

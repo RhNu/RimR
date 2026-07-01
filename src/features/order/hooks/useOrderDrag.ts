@@ -27,6 +27,7 @@ export function useOrderDrag({
   draft,
   aliases,
   modByPackageId,
+  modByCatalogKey,
   selectedInactivePackageIds,
   inactivePackageIds,
   selectedEntryIds,
@@ -40,6 +41,7 @@ export function useOrderDrag({
   draft: ModListDto | null;
   aliases: DisplayAliasDto[];
   modByPackageId: Map<string, ModMetadataDto>;
+  modByCatalogKey: Map<string, ModMetadataDto>;
   selectedInactivePackageIds: Set<string>;
   inactivePackageIds: string[];
   selectedEntryIds: Set<string>;
@@ -58,6 +60,7 @@ export function useOrderDrag({
     draft,
     aliases,
     modByPackageId,
+    modByCatalogKey,
     selectedInactivePackageIds,
     inactivePackageIds,
     selectedEntryIds,
@@ -82,6 +85,7 @@ type DragHandlerInput = {
   draft: ModListDto | null;
   aliases: DisplayAliasDto[];
   modByPackageId: Map<string, ModMetadataDto>;
+  modByCatalogKey: Map<string, ModMetadataDto>;
   selectedInactivePackageIds: Set<string>;
   inactivePackageIds: string[];
   selectedEntryIds: Set<string>;
@@ -99,6 +103,7 @@ function createDragHandlers({
   draft,
   aliases,
   modByPackageId,
+  modByCatalogKey,
   selectedInactivePackageIds,
   inactivePackageIds,
   selectedEntryIds,
@@ -116,6 +121,7 @@ function createDragHandlers({
         draft,
         aliases,
         modByPackageId,
+        modByCatalogKey,
         selectedInactivePackageIds,
         inactivePackageIds,
         selectedEntryIds,
@@ -148,6 +154,7 @@ function createDragHandlers({
     const action = resolveActionForDragEnd(activeId, overId, {
       draft,
       modByPackageId,
+      modByCatalogKey,
       selectedInactivePackageIds,
       inactivePackageIds,
       selectedEntryIds,
@@ -174,6 +181,7 @@ function dragOverlayForStart(
     draft: ModListDto | null;
     aliases: DisplayAliasDto[];
     modByPackageId: Map<string, ModMetadataDto>;
+    modByCatalogKey: Map<string, ModMetadataDto>;
     selectedInactivePackageIds: Set<string>;
     inactivePackageIds: string[];
     selectedEntryIds: Set<string>;
@@ -187,6 +195,7 @@ function dragOverlayForStart(
     input.draft,
     input.aliases,
     input.modByPackageId,
+    input.modByCatalogKey,
     input.selectedInactivePackageIds,
     input.inactivePackageIds,
     input.selectedEntryIds,
@@ -202,6 +211,7 @@ function resolveActionForDragEnd(
   input: {
     draft: ModListDto | null;
     modByPackageId: Map<string, ModMetadataDto>;
+    modByCatalogKey: Map<string, ModMetadataDto>;
     selectedInactivePackageIds: Set<string>;
     inactivePackageIds: string[];
     selectedEntryIds: Set<string>;
@@ -215,6 +225,7 @@ function resolveActionForDragEnd(
     overId,
     modList: input.draft,
     modByPackageId: input.modByPackageId,
+    modByCatalogKey: input.modByCatalogKey,
     selectedInactivePackageIds: input.selectedInactivePackageIds,
     inactivePackageIds: input.inactivePackageIds,
     selectedEntryIds: input.selectedEntryIds,

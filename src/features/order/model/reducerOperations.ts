@@ -1,6 +1,7 @@
 import type { ModListDto, ModListEntryDto, ModMetadataDto } from '@/commands';
 import { clampIndex, moveByTarget, moveManyByTarget } from './dnd';
 import { groupChild, groupChildFromEntry, modEntry, modEntryFromChild } from './entries';
+import { isPackageAddressableMod } from './catalogItemKey';
 import { normalizeModList } from './normalize';
 import type { DropEdge, GroupEntry, ModEntry } from './types';
 
@@ -8,6 +9,7 @@ export function addMods(modList: ModListDto, mods: ModMetadataDto[], index: numb
   const structured = new Set(allStructuredPackages(modList.entries));
   const active = new Set(modList.activeMods);
   const additions = mods.filter((mod) => {
+    if (!isPackageAddressableMod(mod)) return false;
     if (structured.has(mod.packageId) || active.has(mod.packageId)) return false;
     active.add(mod.packageId);
     return true;
@@ -29,6 +31,7 @@ export function addModsToGroup(
   const structured = new Set(allStructuredPackages(modList.entries));
   const active = new Set(modList.activeMods);
   const additions = mods.filter((mod) => {
+    if (!isPackageAddressableMod(mod)) return false;
     if (structured.has(mod.packageId) || active.has(mod.packageId)) return false;
     active.add(mod.packageId);
     return true;
@@ -72,7 +75,7 @@ export function createGroupFromMods(
 ): ModListDto {
   const introduced = new Set(allStructuredPackages(modList.entries));
   const children = mods
-    .filter((mod) => !introduced.has(mod.packageId))
+    .filter((mod) => isPackageAddressableMod(mod) && !introduced.has(mod.packageId))
     .map((mod) => ({ ...groupChild(mod), active }));
   if (children.length === 0) {
     return modList;

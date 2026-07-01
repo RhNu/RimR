@@ -3,6 +3,7 @@
 use crate::domain::{ModMetadata, PackageId};
 use crate::ports::ModSourceKey;
 use indexmap::IndexMap;
+use std::sync::Arc;
 
 /// Result of inserting into a ModCatalog.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,10 +27,30 @@ pub struct DuplicatePackageId {
 /// inserted entry and records subsequent ones as duplicates.
 #[derive(Debug, Clone, Default)]
 pub struct ModCatalog {
-    mods: IndexMap<PackageId, ModMetadata>,
+    mods: IndexMap<CatalogStorageKey, ModMetadata>,
     by_source_key: IndexMap<ModSourceKey, ModMetadata>,
     duplicates: Vec<PackageId>,
     duplicate_sources: Vec<DuplicatePackageId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum CatalogStorageKey {
+    Package(PackageId),
+    Source(Arc<str>),
+}
+
+impl CatalogStorageKey {
+    fn for_metadata(metadata: &ModMetadata) -> Self {
+        if metadata.package_id.is_sentinel() {
+            Self::Source(Arc::from(metadata.source_key.as_str()))
+        } else {
+            Self::Package(metadata.package_id.clone())
+        }
+    }
+
+    fn for_package(package_id: &PackageId) -> Self {
+        Self::Package(package_id.clone())
+    }
 }
 
 impl ModCatalog {
@@ -46,10 +67,11 @@ impl ModCatalog {
     /// duplicate of other missing-packageId mods.
     pub fn insert(&mut self, metadata: ModMetadata) -> CatalogInsertResult {
         let id = metadata.package_id.clone();
+        let storage_key = CatalogStorageKey::for_metadata(&metadata);
         let source_key = metadata.source_key.clone();
         self.by_source_key
             .insert(source_key.clone(), metadata.clone());
-        if let Some(existing) = self.mods.get(&id) {
+        if let Some(existing) = self.mods.get(&storage_key) {
             if !id.is_sentinel() {
                 if !self.duplicates.contains(&id) {
                     self.duplicates.push(id.clone());
@@ -71,13 +93,16 @@ impl ModCatalog {
             }
             CatalogInsertResult::Duplicate
         } else {
-            self.mods.insert(id, metadata);
+            self.mods.insert(storage_key, metadata);
             CatalogInsertResult::Inserted
         }
     }
 
     pub fn get(&self, id: &PackageId) -> Option<&ModMetadata> {
-        self.mods.get(id)
+        if id.is_sentinel() {
+            return None;
+        }
+        self.mods.get(&CatalogStorageKey::for_package(id))
     }
 
     pub fn get_by_source_key(&self, source_key: &ModSourceKey) -> Option<&ModMetadata> {
@@ -85,7 +110,7 @@ impl ModCatalog {
     }
 
     pub fn contains(&self, id: &PackageId) -> bool {
-        self.mods.contains_key(id)
+        !id.is_sentinel() && self.mods.contains_key(&CatalogStorageKey::for_package(id))
     }
 
     pub fn len(&self) -> usize {
@@ -97,11 +122,13 @@ impl ModCatalog {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&PackageId, &ModMetadata)> {
-        self.mods.iter()
+        self.mods
+            .values()
+            .map(|metadata| (&metadata.package_id, metadata))
     }
 
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
-        self.mods.keys()
+        self.mods.values().map(|metadata| &metadata.package_id)
     }
 
     /// Returns the set of duplicate packageIds encountered during insertion.
@@ -205,9 +232,14 @@ mod tests {
     #[test]
     fn sentinel_package_ids_do_not_create_duplicates() {
         let mut cat = ModCatalog::new();
-        cat.insert(meta("", "ka"));
-        cat.insert(meta("", "kb"));
-        cat.insert(meta("   ", "kc"));
+        assert_eq!(cat.insert(meta("", "ka")), CatalogInsertResult::Inserted);
+        assert_eq!(cat.insert(meta("", "kb")), CatalogInsertResult::Inserted);
+        assert_eq!(cat.insert(meta("   ", "kc")), CatalogInsertResult::Inserted);
+        assert_eq!(cat.len(), 3);
+        assert!(
+            cat.get(&PackageId::missing()).is_none(),
+            "sentinel entries are source-key addressable only"
+        );
         assert!(!cat.has_duplicates());
         assert!(cat.duplicates().is_empty());
         assert!(cat.duplicate_sources().is_empty());

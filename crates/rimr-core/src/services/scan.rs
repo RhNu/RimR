@@ -300,8 +300,8 @@ mod tests {
         assert!(report.diagnostics.is_empty());
         let meta = report
             .catalog
-            .get(&PackageId::missing())
-            .expect("sentinel entry should be present");
+            .get_by_source_key(&ModSourceKey::new("key.missing"))
+            .expect("sentinel source key should be present");
         assert!(!meta.valid);
         assert!(!meta.data_malformed);
         assert!(meta.package_id.is_sentinel());
@@ -320,8 +320,8 @@ mod tests {
         assert_eq!(report.diagnostics.len(), 1);
         let meta = report
             .catalog
-            .get(&PackageId::missing())
-            .expect("sentinel entry should be present");
+            .get_by_source_key(&ModSourceKey::new("key.bad"))
+            .expect("sentinel source key should be present");
         assert!(!meta.valid);
         assert!(meta.data_malformed);
         assert_eq!(report.diagnostics[0].code, DiagnosticCode::XmlMalformed);
@@ -343,8 +343,8 @@ mod tests {
         assert_eq!(report.diagnostics.len(), 1);
         let meta = report
             .catalog
-            .get(&PackageId::missing())
-            .expect("sentinel entry should be present");
+            .get_by_source_key(&ModSourceKey::new("key.nopid"))
+            .expect("sentinel source key should be present");
         assert!(!meta.valid);
         assert!(!meta.data_malformed);
         assert_eq!(report.diagnostics[0].code, DiagnosticCode::PackageIdMissing);
@@ -413,8 +413,8 @@ mod tests {
         assert!(report.diagnostics[0].message.contains("permission denied"));
         let meta = report
             .catalog
-            .get(&PackageId::missing())
-            .expect("sentinel entry should be present");
+            .get_by_source_key(&ModSourceKey::new("key.denied"))
+            .expect("sentinel source key should be present");
         assert!(
             !meta.has_assemblies,
             "features error must fall back to false, non-fatal"
@@ -506,8 +506,24 @@ mod tests {
         let report = scan_mod_metadata(&src, &ScanOpts::default())
             .await
             .expect("scan should succeed");
-        assert_eq!(report.catalog.len(), 2);
+        assert_eq!(report.catalog.len(), 3);
         assert!(report.catalog.contains(&PackageId::new("mod.good")));
+        assert!(
+            !report.catalog.contains(&PackageId::missing()),
+            "sentinel package IDs are not package-addressable catalog entries"
+        );
+        assert!(
+            report
+                .catalog
+                .get_by_source_key(&ModSourceKey::new("k.missing"))
+                .is_some()
+        );
+        assert!(
+            report
+                .catalog
+                .get_by_source_key(&ModSourceKey::new("k.bad"))
+                .is_some()
+        );
         assert!(
             !report.catalog.has_duplicates(),
             "sentinel package IDs should not create duplicates"

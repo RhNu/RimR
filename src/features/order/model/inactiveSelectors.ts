@@ -9,6 +9,7 @@ import {
   entrySortableId,
   inactiveCatalogSortableId,
 } from '@/features/order/dndIds';
+import { catalogItemKey, packageCatalogItemKey } from './catalogItemKey';
 import type { AvailableModSortKey, SortDirection } from '@/lib/availableMods';
 import type { InactiveRenderContext, InactiveRenderRow } from './inactiveSelectorsTypes';
 import { sortGroupBlocks, sortOrdinaryRows } from './inactiveSorting';
@@ -40,7 +41,7 @@ export function buildInactiveRenderRows(
   options: InactiveRenderOptions,
 ): InactiveRenderRow[] {
   const ctx = inactiveRenderContext(options);
-  const structured = new Set(structuredPackageIds(entries));
+  const structured = new Set(structuredCatalogKeys(entries));
   const groupBlocks: InactiveRenderRow[][] = [];
   const ordinaryRows: InactiveRenderRow[] = [];
   for (const entry of entries) {
@@ -52,11 +53,12 @@ export function buildInactiveRenderRows(
     }
   }
   for (const mod of catalogMods) {
-    if (structured.has(mod.packageId)) continue;
+    const itemKey = catalogItemKey(mod);
+    if (structured.has(itemKey)) continue;
     if (!ctx.search.matchesMod(mod)) continue;
     ordinaryRows.push({
       kind: 'catalog',
-      id: inactiveCatalogSortableId(mod.packageId),
+      id: inactiveCatalogSortableId(itemKey),
       mod,
       depth: 0,
       missing: false,
@@ -147,13 +149,13 @@ function inactiveGroupChildren(
   });
 }
 
-function structuredPackageIds(entries: ModListEntryDto[]): string[] {
+function structuredCatalogKeys(entries: ModListEntryDto[]): string[] {
   return entries.flatMap((entry) => {
     if (entry.kind === 'mod') {
-      return [entry.identity.packageId];
+      return [packageCatalogItemKey(entry.identity.packageId)];
     }
     if (entry.kind === 'group') {
-      return entry.entries.map((child) => child.identity.packageId);
+      return entry.entries.map((child) => packageCatalogItemKey(child.identity.packageId));
     }
     return [];
   });

@@ -2,7 +2,11 @@ import { useCallback, type MouseEvent, type RefObject } from 'react';
 import type { ModListEntryDto, ModListGroupChildDto, ModMetadataDto } from '@/commands';
 import { identityForMod } from '@/features/order/identity';
 import type { Selection } from '@/features/order/types';
-import { updateSelectionForClick, type SelectionClickModifiers } from '@/features/order/model';
+import {
+  catalogItemKey,
+  updateSelectionForClick,
+  type SelectionClickModifiers,
+} from '@/features/order/model';
 
 export type SelectionRefs = {
   selectedInactivePackageIds: RefObject<Set<string>>;
@@ -85,10 +89,11 @@ function useInactiveSelectionHandler({
     (mod: ModMetadataDto, event: MouseEvent<HTMLButtonElement>): void => {
       setSelection({ kind: 'mod', identity: identityForMod(mod) });
       warmSelectedPreview(mod.sourceKey, refs.inactiveSourceKeys.current);
+      const itemKey = catalogItemKey(mod);
       const update = updateSelectionForClick(
         refs.selectedInactivePackageIds.current,
         refs.inactivePackageIds.current,
-        mod.packageId,
+        itemKey,
         modifiersFromMouseEvent(event),
         refs.inactiveSelectionAnchor.current,
       );
@@ -215,9 +220,10 @@ function useEnsureInactiveSelected(
 ) {
   return useCallback(
     (mod: ModMetadataDto): void => {
-      if (!refs.selectedInactivePackageIds.current.has(mod.packageId)) {
-        setSelectedInactivePackageIds(new Set([mod.packageId]));
-        setInactiveSelectionAnchor(mod.packageId);
+      const itemKey = catalogItemKey(mod);
+      if (!refs.selectedInactivePackageIds.current.has(itemKey)) {
+        setSelectedInactivePackageIds(new Set([itemKey]));
+        setInactiveSelectionAnchor(itemKey);
       }
       setSelection({ kind: 'mod', identity: identityForMod(mod) });
       warmSelectedPreview(mod.sourceKey, refs.inactiveSourceKeys.current);

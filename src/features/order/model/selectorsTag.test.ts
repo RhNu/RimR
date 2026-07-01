@@ -134,7 +134,7 @@ describe('order model tag render rows', () => {
     expect(rows.map((row) => row.id)).toEqual([
       'inactive:entry:group-mixed',
       'inactive:child:group-mixed:child-missing',
-      'inactive:catalog:c.extra',
+      'inactive:catalog:package:c.extra',
     ]);
   });
 });

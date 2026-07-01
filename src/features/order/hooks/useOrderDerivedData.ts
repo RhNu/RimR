@@ -18,9 +18,11 @@ import { diagnosticsByPackage, summarizeValidationReport } from '@/lib/diagnosti
 import {
   activeModsKey,
   buildActiveRenderRows,
+  catalogItemKey,
   buildInactiveRenderRows,
   compileSmartModSearch,
   filterInactiveMods,
+  isPackageAddressableMod,
   unintroducedMods,
   type InactiveRenderRow,
 } from '@/features/order/model';
@@ -53,7 +55,14 @@ export function useOrderDerivedData({
   availableSortDirection,
 }: UseOrderDerivedDataParams) {
   const mods = useMemo(() => scan?.catalog.mods ?? [], [scan]);
-  const modByPackageId = useMemo(() => new Map(mods.map((mod) => [mod.packageId, mod])), [mods]);
+  const modByPackageId = useMemo(
+    () => new Map(mods.filter(isPackageAddressableMod).map((mod) => [mod.packageId, mod])),
+    [mods],
+  );
+  const modByCatalogKey = useMemo(
+    () => new Map(mods.map((mod) => [catalogItemKey(mod), mod])),
+    [mods],
+  );
   const aliases = library?.settings.aliases ?? EMPTY_ALIASES;
   const tagDefs = library?.settings.tagDefs ?? EMPTY_TAG_DEFS;
   const modTags = library?.settings.modTags ?? EMPTY_MOD_TAGS;
@@ -93,6 +102,7 @@ export function useOrderDerivedData({
   return {
     mods,
     modByPackageId,
+    modByCatalogKey,
     sortedInactiveMods: inactive.sortedInactiveMods,
     inactiveRows: inactive.inactiveRows,
     activeRows,
@@ -102,6 +112,7 @@ export function useOrderDerivedData({
     draftActiveModsKey,
     gameActiveModsKey,
     inactivePackageIds: inactive.inactivePackageIds,
+    inactiveCatalogKeys: inactive.inactiveCatalogKeys,
     inactiveSourceKeys: inactive.inactiveSourceKeys,
     visibleActiveEntryIds,
     activeSourceKeys,
@@ -134,6 +145,7 @@ function useInactiveMods({
   sortedInactiveMods: ModMetadataDto[];
   inactiveRows: InactiveRenderRow[];
   inactivePackageIds: string[];
+  inactiveCatalogKeys: string[];
   inactiveSourceKeys: (string | null | undefined)[];
 } {
   const inactiveMods = useMemo(() => (draft ? unintroducedMods(mods, draft) : mods), [mods, draft]);
@@ -178,11 +190,21 @@ function useInactiveMods({
     () => sortedInactiveMods.map((candidate) => candidate.packageId),
     [sortedInactiveMods],
   );
+  const inactiveCatalogKeys = useMemo(
+    () => sortedInactiveMods.map((candidate) => catalogItemKey(candidate)),
+    [sortedInactiveMods],
+  );
   const inactiveSourceKeys = useMemo(
     () => sortedInactiveMods.map((candidate) => candidate.sourceKey),
     [sortedInactiveMods],
   );
-  return { sortedInactiveMods, inactiveRows, inactivePackageIds, inactiveSourceKeys };
+  return {
+    sortedInactiveMods,
+    inactiveRows,
+    inactivePackageIds,
+    inactiveCatalogKeys,
+    inactiveSourceKeys,
+  };
 }
 
 function validationDiagnostics(validationResult: ValidateOrderDto | null) {

@@ -26,6 +26,7 @@ export function dragOverlayForId(
   modList: ModListDto | null,
   aliases: DisplayAliasDto[],
   modByPackageId: Map<string, ModMetadataDto>,
+  modByCatalogKey: Map<string, ModMetadataDto>,
   selectedInactivePackageIds: Set<string>,
   inactivePackageIds: string[],
   selectedEntryIds: Set<string>,
@@ -38,6 +39,7 @@ export function dragOverlayForId(
       id,
       aliases,
       modByPackageId,
+      modByCatalogKey,
       selectedInactivePackageIds,
       inactivePackageIds,
       tagDefs,
@@ -66,17 +68,18 @@ function inactiveDragOverlay(
   id: string,
   aliases: DisplayAliasDto[],
   modByPackageId: Map<string, ModMetadataDto>,
+  modByCatalogKey: Map<string, ModMetadataDto>,
   selected: Set<string>,
   orderedIds: string[],
   tagDefs: TagDefDto[],
   modTags: ModTagBindingDto[],
 ): DragOverlayState {
-  const packageId = parseCatalogId(id)?.packageId ?? id;
-  const packageIds = orderedSelectedDragIds(packageId, selected, orderedIds);
-  const first = modByPackageId.get(packageIds[0] ?? packageId);
+  const itemKey = parseCatalogId(id)?.catalogKey ?? id;
+  const itemKeys = orderedSelectedDragIds(itemKey, selected, orderedIds);
+  const first = modByCatalogKey.get(itemKeys[0] ?? itemKey);
   return {
-    label: first ? labelForIdentityFromMod(first, aliases, modByPackageId) : packageId,
-    count: packageIds.length,
+    label: first ? labelForIdentityFromMod(first, aliases, modByPackageId) : itemKey,
+    count: itemKeys.length,
     icon: first ? <ModTypeIcon hasAssemblies={first.hasAssemblies} /> : undefined,
     colors: first ? colorsForIdentity(modTags, tagDefs, identityForMod(first)) : undefined,
   };

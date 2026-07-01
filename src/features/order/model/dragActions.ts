@@ -11,6 +11,7 @@ import {
   resolveInactiveChildDropAction,
   resolveInactiveEntryDropOnEntry,
 } from './dragInactiveActions';
+import { isPackageAddressableMod } from './catalogItemKey';
 import type { DropEdge, ModListAction } from './types';
 
 export type DropIndicatorState = {
@@ -32,6 +33,7 @@ export type ResolveDragActionInput = {
   overId: string;
   modList: ModListDto;
   modByPackageId: Map<string, ModMetadataDto>;
+  modByCatalogKey: Map<string, ModMetadataDto>;
   selectedInactivePackageIds: Set<string>;
   inactivePackageIds: string[];
   selectedEntryIds: Set<string>;
@@ -70,15 +72,15 @@ export function orderedSelectedDragIds(
 function resolveCatalogDrag(input: ResolveDragActionInput): ModListAction | null {
   const catalogId = parseCatalogId(input.activeId);
   if (!catalogId) return null;
-  const packageId = catalogId.packageId;
-  const packageIds = orderedSelectedDragIds(
-    packageId,
+  const itemKey = catalogId.catalogKey;
+  const itemKeys = orderedSelectedDragIds(
+    itemKey,
     input.selectedInactivePackageIds,
     input.inactivePackageIds,
   );
-  const mods = packageIds
-    .map((id) => input.modByPackageId.get(id))
-    .filter((mod): mod is ModMetadataDto => mod != null);
+  const mods = itemKeys
+    .map((id) => input.modByCatalogKey.get(id))
+    .filter((mod): mod is ModMetadataDto => mod != null && isPackageAddressableMod(mod));
   if (mods.length === 0) return null;
   return catalogDropAction(input, mods);
 }

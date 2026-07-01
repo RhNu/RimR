@@ -1,12 +1,13 @@
 import type { ModIdentityDto, ModListEntryDto, ModMetadataDto } from '@/commands';
 import { identityForMod, identityMatches } from '@/features/order/identity';
 import type { ActiveRenderRow } from './selectors';
+import { catalogItemKey } from './catalogItemKey';
 
 export function selectedInactiveModIdentities(
   mods: ModMetadataDto[],
-  selectedPackageIds: Set<string>,
+  selectedCatalogKeys: Set<string>,
 ): ModIdentityDto[] {
-  return mods.filter((mod) => selectedPackageIds.has(mod.packageId)).map(identityForMod);
+  return mods.filter((mod) => selectedCatalogKeys.has(catalogItemKey(mod))).map(identityForMod);
 }
 
 export function selectedActiveModIdentities(

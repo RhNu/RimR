@@ -14,7 +14,9 @@ import {
 import {
   canCreateActiveGroup,
   canCreateInactiveGroup,
+  catalogItemKey,
   createGroupId,
+  isPackageAddressableMod,
   submitOrderDialog,
   type GameSyncResult,
   type ModListAction,
@@ -101,8 +103,8 @@ export function useOrderEditActions({
   function handleCreateGroupFromInactive(nameValue: string): void {
     const name = nameValue.trim();
     if (!draftRef.current || !canCreateInactiveGroup(selectedInactivePackageIds) || !name) return;
-    const selectedMods = sortedInactiveMods.filter((mod) =>
-      selectedInactivePackageIds.has(mod.packageId),
+    const selectedMods = sortedInactiveMods.filter(
+      (mod) => isPackageAddressableMod(mod) && selectedInactivePackageIds.has(catalogItemKey(mod)),
     );
     applyDraft({
       type: 'createGroupFromMods',

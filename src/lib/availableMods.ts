@@ -17,7 +17,7 @@ export function sortAvailableMods(
     if (primary !== 0) {
       return primary * multiplier;
     }
-    return compareText(a.packageId, b.packageId);
+    return compareText(a.packageId, b.packageId) || compareText(a.sourceKey, b.sourceKey);
   });
 }
 

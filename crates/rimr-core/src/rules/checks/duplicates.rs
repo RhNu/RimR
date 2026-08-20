@@ -6,7 +6,7 @@ use crate::domain::ModCatalog;
 /// Checks for duplicate packageIds reported by the catalog.
 pub(crate) fn check_duplicates(catalog: &ModCatalog) -> Vec<Diagnostic> {
     catalog
-        .duplicate_sources()
+        .duplicate_variants()
         .iter()
         .map(|dup| {
             let locations = dup

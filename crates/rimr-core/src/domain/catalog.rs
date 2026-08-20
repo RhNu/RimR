@@ -15,6 +15,7 @@ pub enum CatalogInsertResult {
     Duplicate,
 }
 
+/// A packageId installed more than once, with every source it was found at.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DuplicatePackageId {
     pub package_id: PackageId,
@@ -23,14 +24,20 @@ pub struct DuplicatePackageId {
 
 /// All installed mods indexed by PackageId.
 ///
-/// Duplicate packageIds are tracked separately; the catalog keeps the first
-/// inserted entry and records subsequent ones as duplicates.
+/// Every discovered mod — including duplicates — is stored once behind an
+/// `Arc` and addressed through two indices, so a mod installed in both the
+/// Workshop and the local folder is not cloned per index:
+///
+/// - `primary` resolves a packageId to the first entry inserted for it, which
+///   is the one that participates in ordering and validation.
+/// - `by_source_key` resolves every entry, including the shadowed duplicates,
+///   so the UI can still inspect and act on the copy the user is looking at.
 #[derive(Debug, Clone, Default)]
 pub struct ModCatalog {
-    mods: IndexMap<CatalogStorageKey, ModMetadata>,
-    by_source_key: IndexMap<ModSourceKey, ModMetadata>,
-    duplicates: Vec<PackageId>,
-    duplicate_sources: Vec<DuplicatePackageId>,
+    entries: Vec<Arc<ModMetadata>>,
+    primary: IndexMap<CatalogStorageKey, usize>,
+    by_source_key: IndexMap<ModSourceKey, usize>,
+    duplicates: Vec<DuplicatePackageId>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -58,90 +65,116 @@ impl ModCatalog {
         Self::default()
     }
 
-    /// Inserts a mod. If the packageId already exists, the existing entry is
-    /// kept, the packageId is recorded as a duplicate, and
-    /// `CatalogInsertResult::Duplicate` is returned.
+    /// Inserts a mod. If the packageId already exists, the existing entry stays
+    /// primary, the packageId is recorded as a duplicate, and
+    /// `CatalogInsertResult::Duplicate` is returned. The new entry is still
+    /// stored and remains reachable via [`Self::get_by_source_key`].
     ///
     /// Sentinel package IDs (missing/invalid) are exempt from duplicate
     /// tracking — each missing-packageId mod is an independent error, not a
     /// duplicate of other missing-packageId mods.
     pub fn insert(&mut self, metadata: ModMetadata) -> CatalogInsertResult {
-        let id = metadata.package_id.clone();
         let storage_key = CatalogStorageKey::for_metadata(&metadata);
         let source_key = metadata.source_key.clone();
-        self.by_source_key
-            .insert(source_key.clone(), metadata.clone());
-        if let Some(existing) = self.mods.get(&storage_key) {
-            if !id.is_sentinel() {
-                if !self.duplicates.contains(&id) {
-                    self.duplicates.push(id.clone());
-                }
-                if let Some(duplicate) = self
-                    .duplicate_sources
-                    .iter_mut()
-                    .find(|duplicate| duplicate.package_id == id)
-                {
-                    if !duplicate.source_keys.contains(&source_key) {
-                        duplicate.source_keys.push(source_key);
-                    }
-                } else {
-                    self.duplicate_sources.push(DuplicatePackageId {
-                        package_id: id,
-                        source_keys: vec![existing.source_key.clone(), source_key],
-                    });
+        let package_id = metadata.package_id.clone();
+
+        let position = self.entries.len();
+        self.entries.push(Arc::new(metadata));
+        self.by_source_key.insert(source_key.clone(), position);
+
+        let Some(&primary) = self.primary.get(&storage_key) else {
+            self.primary.insert(storage_key, position);
+            return CatalogInsertResult::Inserted;
+        };
+        if !package_id.is_sentinel() {
+            self.record_duplicate(
+                package_id,
+                &self.entries[primary].source_key.clone(),
+                source_key,
+            );
+        }
+        CatalogInsertResult::Duplicate
+    }
+
+    fn record_duplicate(
+        &mut self,
+        package_id: PackageId,
+        primary_source_key: &ModSourceKey,
+        source_key: ModSourceKey,
+    ) {
+        match self
+            .duplicates
+            .iter_mut()
+            .find(|duplicate| duplicate.package_id == package_id)
+        {
+            Some(duplicate) => {
+                if !duplicate.source_keys.contains(&source_key) {
+                    duplicate.source_keys.push(source_key);
                 }
             }
-            CatalogInsertResult::Duplicate
-        } else {
-            self.mods.insert(storage_key, metadata);
-            CatalogInsertResult::Inserted
+            None => self.duplicates.push(DuplicatePackageId {
+                package_id,
+                source_keys: vec![primary_source_key.clone(), source_key],
+            }),
         }
     }
 
+    /// Returns the primary entry for a packageId.
+    ///
+    /// Sentinel (missing packageId) mods are addressable only by source key.
     pub fn get(&self, id: &PackageId) -> Option<&ModMetadata> {
         if id.is_sentinel() {
             return None;
         }
-        self.mods.get(&CatalogStorageKey::for_package(id))
+        self.primary
+            .get(&CatalogStorageKey::for_package(id))
+            .map(|&position| self.entries[position].as_ref())
     }
 
+    /// Returns any entry — primary or shadowed duplicate — by source key.
     pub fn get_by_source_key(&self, source_key: &ModSourceKey) -> Option<&ModMetadata> {
-        self.by_source_key.get(source_key)
+        self.by_source_key
+            .get(source_key)
+            .map(|&position| self.entries[position].as_ref())
     }
 
     pub fn contains(&self, id: &PackageId) -> bool {
-        !id.is_sentinel() && self.mods.contains_key(&CatalogStorageKey::for_package(id))
+        !id.is_sentinel()
+            && self
+                .primary
+                .contains_key(&CatalogStorageKey::for_package(id))
     }
 
+    /// Number of primary entries: what the user sees as one mod each.
     pub fn len(&self) -> usize {
-        self.mods.len()
+        self.primary.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.mods.is_empty()
+        self.primary.is_empty()
     }
 
+    /// Iterates the primary entries in discovery order.
     pub fn iter(&self) -> impl Iterator<Item = (&PackageId, &ModMetadata)> {
-        self.mods
+        self.primary
             .values()
+            .map(|&position| self.entries[position].as_ref())
             .map(|metadata| (&metadata.package_id, metadata))
     }
 
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
-        self.mods.values().map(|metadata| &metadata.package_id)
+        self.iter().map(|(package_id, _)| package_id)
     }
 
-    /// Returns the set of duplicate packageIds encountered during insertion.
-    pub fn duplicates(&self) -> &[PackageId] {
+    /// Every packageId that was found at more than one source, with all of the
+    /// sources it was found at.
+    pub fn duplicate_variants(&self) -> &[DuplicatePackageId] {
         &self.duplicates
     }
 
-    pub fn duplicate_sources(&self) -> &[DuplicatePackageId] {
-        &self.duplicate_sources
-    }
-
-    pub fn duplicate_variants(&self) -> &[DuplicatePackageId] {
-        &self.duplicate_sources
+    /// The duplicated packageIds alone.
+    pub fn duplicates(&self) -> impl Iterator<Item = &PackageId> {
+        self.duplicates.iter().map(|entry| &entry.package_id)
     }
 
     pub fn has_duplicates(&self) -> bool {
@@ -183,7 +216,7 @@ mod tests {
         assert_eq!(cat.insert(meta("c", "kc")), CatalogInsertResult::Inserted);
         assert_eq!(cat.len(), 3);
         assert!(!cat.has_duplicates());
-        assert!(cat.duplicates().is_empty());
+        assert_eq!(cat.duplicates().count(), 0);
     }
 
     #[test]
@@ -194,7 +227,7 @@ mod tests {
             cat.insert(meta("foo", "second")),
             CatalogInsertResult::Duplicate
         );
-        assert_eq!(cat.duplicates().len(), 1);
+        assert_eq!(cat.duplicates().count(), 1);
         let got = cat.get(&PackageId::new("foo")).unwrap();
         assert_eq!(got.source_key.as_str(), "first");
     }
@@ -226,7 +259,10 @@ mod tests {
         cat.insert(meta("d", "kd"));
         cat.insert(meta("d", "kd2"));
         assert!(cat.has_duplicates());
-        assert_eq!(cat.duplicates().to_vec(), vec![PackageId::new("d")]);
+        assert_eq!(
+            cat.duplicates().cloned().collect::<Vec<_>>(),
+            vec![PackageId::new("d")]
+        );
     }
 
     #[test]
@@ -241,8 +277,8 @@ mod tests {
             "sentinel entries are source-key addressable only"
         );
         assert!(!cat.has_duplicates());
-        assert!(cat.duplicates().is_empty());
-        assert!(cat.duplicate_sources().is_empty());
+        assert_eq!(cat.duplicates().count(), 0);
+        assert!(cat.duplicate_variants().is_empty());
         assert_eq!(
             cat.get_by_source_key(&ModSourceKey::new("ka"))
                 .expect("first sentinel source key should resolve")
@@ -285,6 +321,53 @@ mod tests {
         assert_eq!(
             variants[0].source_keys,
             vec![ModSourceKey::new("first"), ModSourceKey::new("second")]
+        );
+    }
+
+    #[test]
+    fn duplicates_are_stored_once_and_both_variants_stay_addressable() {
+        let mut cat = ModCatalog::new();
+        cat.insert(meta("foo", "C:/workshop/294100/12345"));
+        cat.insert(meta("foo", "C:/RimWorld/Mods/Foo"));
+
+        assert_eq!(cat.len(), 1, "a duplicated mod counts as one mod");
+        assert_eq!(
+            cat.iter().count(),
+            1,
+            "iteration yields primaries only, so ordering sees one entry"
+        );
+        assert_eq!(
+            cat.get(&PackageId::new("foo")).unwrap().source_key.as_str(),
+            "C:/workshop/294100/12345",
+            "the first discovered copy stays primary"
+        );
+        for key in ["C:/workshop/294100/12345", "C:/RimWorld/Mods/Foo"] {
+            assert_eq!(
+                cat.get_by_source_key(&ModSourceKey::new(key))
+                    .expect("both copies remain inspectable")
+                    .source_key
+                    .as_str(),
+                key
+            );
+        }
+    }
+
+    #[test]
+    fn a_third_copy_extends_the_existing_duplicate_record() {
+        let mut cat = ModCatalog::new();
+        cat.insert(meta("foo", "a"));
+        cat.insert(meta("foo", "b"));
+        cat.insert(meta("foo", "c"));
+
+        let variants = cat.duplicate_variants();
+        assert_eq!(variants.len(), 1);
+        assert_eq!(
+            variants[0].source_keys,
+            vec![
+                ModSourceKey::new("a"),
+                ModSourceKey::new("b"),
+                ModSourceKey::new("c"),
+            ]
         );
     }
 }

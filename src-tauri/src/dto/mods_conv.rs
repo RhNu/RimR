@@ -21,7 +21,10 @@ pub fn mod_catalog(catalog: &ModCatalog) -> ModCatalogDto {
             .iter()
             .map(|(_, metadata)| mod_metadata(metadata))
             .collect(),
-        duplicate_package_ids: packages(catalog.duplicates()),
+        duplicate_package_ids: catalog
+            .duplicates()
+            .map(|package_id| package_id.as_str().to_string())
+            .collect(),
         duplicate_variants: catalog
             .duplicate_variants()
             .iter()

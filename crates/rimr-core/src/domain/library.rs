@@ -342,17 +342,14 @@ pub fn mod_list_from_official_content(
 }
 
 /// Returns a stable string key for comparing two [`ModIdentity`] values.
+///
+/// Only the `package_id` participates. The source fields are provenance
+/// hints captured when the entry was created: `source_key` is a host path
+/// that changes when a mod moves between the Workshop and local folders, when
+/// the game is reinstalled, or when a folder is renamed. Keying on them made
+/// aliases and tag bindings silently detach from their mod.
 pub fn identity_key(identity: &ModIdentity) -> String {
-    format!(
-        "{}|{:?}|{}|{}",
-        identity.package_id,
-        identity.source_kind,
-        identity.source_key.as_deref().unwrap_or(""),
-        identity
-            .steam_app_id
-            .map(|id| id.to_string())
-            .unwrap_or_default(),
-    )
+    identity.package_id.trim().to_ascii_lowercase()
 }
 
 /// Merges imported library settings aliases into local ones.
@@ -435,6 +432,36 @@ pub fn merge_library_settings(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn identity(package_id: &str, kind: SourceKind, source_key: &str) -> ModIdentity {
+        ModIdentity {
+            package_id: package_id.to_string(),
+            source_kind: Some(kind),
+            source_key: Some(source_key.to_string()),
+            steam_app_id: None,
+        }
+    }
+
+    #[test]
+    fn identity_key_survives_workshop_to_local_swap() {
+        let workshop = identity("foo.bar", SourceKind::Workshop, "C:/workshop/294100/12345");
+        let local = identity("foo.bar", SourceKind::Local, "C:/RimWorld/Mods/FooBar");
+        assert_eq!(identity_key(&workshop), identity_key(&local));
+    }
+
+    #[test]
+    fn identity_key_normalizes_package_id() {
+        let a = identity("  Foo.Bar  ", SourceKind::Local, "a");
+        let b = identity("foo.bar", SourceKind::Local, "b");
+        assert_eq!(identity_key(&a), identity_key(&b));
+    }
+
+    #[test]
+    fn identity_key_still_separates_distinct_mods() {
+        let a = identity("foo.bar", SourceKind::Local, "same");
+        let b = identity("other.mod", SourceKind::Local, "same");
+        assert_ne!(identity_key(&a), identity_key(&b));
+    }
 
     #[test]
     fn slugify_basic() {

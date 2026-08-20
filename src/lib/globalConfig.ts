@@ -14,13 +14,15 @@ export function mergeGlobalAliases(
   };
 }
 
+/**
+ * Stable comparison key for a mod identity: the package id alone.
+ *
+ * Source provenance (`sourceKind` / `sourceKey`) is deliberately excluded — it
+ * changes when a mod moves between the Workshop and local folders, which would
+ * otherwise orphan the alias.
+ */
 export function identityKey(identity: ModIdentityDto): string {
-  return JSON.stringify([
-    identity.packageId,
-    identity.sourceKind ?? null,
-    identity.sourceKey ?? null,
-    identity.steamAppId ?? null,
-  ]);
+  return identity.packageId.trim().toLowerCase();
 }
 
 export function upsertDisplayAlias(

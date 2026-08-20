@@ -47,6 +47,21 @@ export function identityForMod(mod: ModMetadataDto): ModIdentityDto {
   };
 }
 
+/**
+ * Resolves the *currently installed* source key for an identity.
+ *
+ * A mod list entry stores the source key it had when it was added. That path
+ * goes stale as soon as the mod moves between the Workshop and local folders,
+ * so anything touching the filesystem must resolve against the live catalog
+ * instead of trusting the stored hint.
+ */
+export function resolveSourceKey(
+  identity: ModIdentityDto,
+  modByPackageId: Map<string, ModMetadataDto> | null | undefined,
+): string | null | undefined {
+  return modByPackageId?.get(identity.packageId)?.sourceKey ?? null;
+}
+
 export function findAlias(
   aliases: DisplayAliasDto[],
   identity: ModIdentityDto,
@@ -66,11 +81,19 @@ export function upsertAlias(
   return next;
 }
 
+/**
+ * Two identities refer to the same mod when their package ids match.
+ *
+ * The source fields are provenance hints captured when the entry was created.
+ * `sourceKey` in particular is a host path that changes when a mod moves
+ * between the Workshop and local folders, when the game is reinstalled, or
+ * when a folder is renamed — keying on it detached aliases and tags from
+ * their mod.
+ */
 export function identityMatches(a: ModIdentityDto, b: ModIdentityDto): boolean {
-  return (
-    a.packageId === b.packageId &&
-    (a.sourceKey ?? null) === (b.sourceKey ?? null) &&
-    (a.steamAppId ?? null) === (b.steamAppId ?? null) &&
-    (a.sourceKind ?? null) === (b.sourceKind ?? null)
-  );
+  return normalizePackageId(a.packageId) === normalizePackageId(b.packageId);
+}
+
+function normalizePackageId(packageId: string): string {
+  return packageId.trim().toLowerCase();
 }

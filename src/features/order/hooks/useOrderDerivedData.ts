@@ -26,6 +26,7 @@ import {
   unintroducedMods,
   type InactiveRenderRow,
 } from '@/features/order/model';
+import { resolveSourceKey } from '@/features/order/identity';
 
 const EMPTY_ALIASES: DisplayAliasDto[] = [];
 const EMPTY_TAG_DEFS: TagDefDto[] = [];
@@ -97,7 +98,10 @@ export function useOrderDerivedData({
   const draftActiveModsKey = useMemo(() => activeModsKey(draft?.activeMods ?? []), [draft]);
   const gameActiveModsKey = useMemo(() => activeModsKey(activeMods), [activeMods]);
   const visibleActiveEntryIds = useMemo(() => visibleModEntryIds(activeRows), [activeRows]);
-  const activeSourceKeys = useMemo(() => sourceKeysForRows(activeRows), [activeRows]);
+  const activeSourceKeys = useMemo(
+    () => sourceKeysForRows(activeRows, modByPackageId),
+    [activeRows, modByPackageId],
+  );
 
   return {
     mods,
@@ -223,10 +227,22 @@ function visibleModEntryIds(rows: ReturnType<typeof buildActiveRenderRows>): str
   );
 }
 
-function sourceKeysForRows(rows: ReturnType<typeof buildActiveRenderRows>) {
+/**
+ * Source keys for the visible active rows, resolved against the live catalog.
+ *
+ * The identity stored on an entry keeps the source key it had when the mod was
+ * added, which is wrong as soon as the mod moves between the Workshop and local
+ * folders. Prefetching must follow where the mod is now.
+ */
+function sourceKeysForRows(
+  rows: ReturnType<typeof buildActiveRenderRows>,
+  modByPackageId: Map<string, ModMetadataDto>,
+) {
   return rows.flatMap((row) => {
-    if (row.kind === 'entry' && row.entry.kind === 'mod') return [row.entry.identity.sourceKey];
-    if (row.kind === 'child') return [row.child.identity.sourceKey];
+    if (row.kind === 'entry' && row.entry.kind === 'mod') {
+      return [resolveSourceKey(row.entry.identity, modByPackageId)];
+    }
+    if (row.kind === 'child') return [resolveSourceKey(row.child.identity, modByPackageId)];
     return [];
   });
 }

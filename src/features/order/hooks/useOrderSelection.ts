@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ModMetadataDto } from '@/commands';
 import type { Selection } from '@/features/order/types';
 import { pruneSelection } from '@/features/order/model';
 import { useSelectionHandlers, type SelectionRefs } from './selectionHandlers';
 
 export function useOrderSelection({
+  modByPackageId,
   inactivePackageIds,
   inactiveSourceKeys,
   visibleActiveEntryIds,
   activeSourceKeys,
   warmSelectedPreview,
 }: {
+  modByPackageId: Map<string, ModMetadataDto>;
   inactivePackageIds: string[];
   inactiveSourceKeys: ReadonlyArray<string | null | undefined>;
   visibleActiveEntryIds: string[];
@@ -27,6 +30,7 @@ export function useOrderSelection({
     new Set(),
   );
   const refs = useSelectionRefs({
+    modByPackageId,
     selectedInactivePackageIds,
     inactivePackageIds,
     inactiveSourceKeys,
@@ -74,6 +78,7 @@ export function useOrderSelection({
 }
 
 function useSelectionRefs(state: {
+  modByPackageId: Map<string, ModMetadataDto>;
   selectedInactivePackageIds: Set<string>;
   inactivePackageIds: string[];
   inactiveSourceKeys: ReadonlyArray<string | null | undefined>;
@@ -84,6 +89,7 @@ function useSelectionRefs(state: {
   activeSourceKeys: ReadonlyArray<string | null | undefined>;
 }): SelectionRefs {
   const refs = {
+    modByPackageId: useRef(state.modByPackageId),
     selectedInactivePackageIds: useRef(state.selectedInactivePackageIds),
     inactivePackageIds: useRef(state.inactivePackageIds),
     inactiveSourceKeys: useRef(state.inactiveSourceKeys),
@@ -93,6 +99,7 @@ function useSelectionRefs(state: {
     activeSelectionAnchor: useRef(state.activeSelectionAnchor),
     activeSourceKeys: useRef(state.activeSourceKeys),
   };
+  refs.modByPackageId.current = state.modByPackageId;
   refs.selectedInactivePackageIds.current = state.selectedInactivePackageIds;
   refs.inactivePackageIds.current = state.inactivePackageIds;
   refs.inactiveSourceKeys.current = state.inactiveSourceKeys;

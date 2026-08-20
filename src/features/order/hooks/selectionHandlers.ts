@@ -1,6 +1,6 @@
 import { useCallback, type MouseEvent, type RefObject } from 'react';
 import type { ModListEntryDto, ModListGroupChildDto, ModMetadataDto } from '@/commands';
-import { identityForMod } from '@/features/order/identity';
+import { identityForMod, resolveSourceKey } from '@/features/order/identity';
 import type { Selection } from '@/features/order/types';
 import {
   catalogItemKey,
@@ -9,6 +9,8 @@ import {
 } from '@/features/order/model';
 
 export type SelectionRefs = {
+  /** Live catalog, used to resolve stored identities to their current path. */
+  modByPackageId: RefObject<Map<string, ModMetadataDto>>;
   selectedInactivePackageIds: RefObject<Set<string>>;
   inactivePackageIds: RefObject<string[]>;
   inactiveSourceKeys: RefObject<ReadonlyArray<string | null | undefined>>;
@@ -135,6 +137,7 @@ function useActiveSelectionHandler({
           setSelection,
           warmSelectedPreview,
           refs.activeSourceKeys.current,
+          refs.modByPackageId.current,
         );
         return;
       }
@@ -167,10 +170,11 @@ function selectEntryWithoutMouse(
     keys: ReadonlyArray<string | null | undefined>,
   ) => void,
   activeSourceKeys: ReadonlyArray<string | null | undefined>,
+  modByPackageId: Map<string, ModMetadataDto>,
 ): void {
   setSelection(selection);
   if (selection?.kind === 'mod') {
-    warmSelectedPreview(selection.identity.sourceKey, activeSourceKeys);
+    warmSelectedPreview(resolveSourceKey(selection.identity, modByPackageId), activeSourceKeys);
   }
 }
 
@@ -196,7 +200,10 @@ function selectEntryWithMouse(
     return;
   }
   setters.setSelection({ kind: 'mod', identity: entry.identity });
-  setters.warmSelectedPreview(entry.identity.sourceKey, refs.activeSourceKeys.current);
+  setters.warmSelectedPreview(
+    resolveSourceKey(entry.identity, refs.modByPackageId.current),
+    refs.activeSourceKeys.current,
+  );
   const update = updateSelectionForClick(
     refs.selectedEntryIds.current,
     refs.visibleActiveEntryIds.current,
@@ -256,7 +263,10 @@ function useEnsureActiveSelected(
       }
       setSelection(selectionForEntry(entry));
       if (entry.kind === 'mod') {
-        warmSelectedPreview(entry.identity.sourceKey, refs.activeSourceKeys.current);
+        warmSelectedPreview(
+          resolveSourceKey(entry.identity, refs.modByPackageId.current),
+          refs.activeSourceKeys.current,
+        );
       }
     },
     [refs, setActiveSelectionAnchor, setSelectedEntryIds, setSelection, warmSelectedPreview],
@@ -274,7 +284,10 @@ function useSelectGroupChild(
   return useCallback(
     (child: ModListGroupChildDto): void => {
       setSelection({ kind: 'mod', identity: child.identity });
-      warmSelectedPreview(child.identity.sourceKey, refs.activeSourceKeys.current);
+      warmSelectedPreview(
+        resolveSourceKey(child.identity, refs.modByPackageId.current),
+        refs.activeSourceKeys.current,
+      );
     },
     [refs, setSelection, warmSelectedPreview],
   );

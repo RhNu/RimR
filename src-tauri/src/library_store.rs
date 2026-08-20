@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use rimr_core::migrations::{DocumentKind, migrate_document};
 use rimr_core::{
     LibraryError, LibrarySettings, LibraryStore, ModList, ModListIndex, RIMR_FORMAT_VERSION,
 };
@@ -41,28 +42,20 @@ impl JsonLibraryStore {
     async fn read_json<T: DeserializeOwned>(
         &self,
         path: &Path,
-        file: &'static str,
+        kind: DocumentKind,
     ) -> Result<T, LibraryError> {
         let bytes = tokio::fs::read(path)
             .await
             .map_err(|e| LibraryError::Io(e.to_string()))?;
-        let value: Value = serde_json::from_slice(&bytes)?;
-        let found = value
-            .get("formatVersion")
-            .or_else(|| value.get("format_version"))
-            .and_then(Value::as_u64)
-            .ok_or_else(|| {
-                LibraryError::Json(serde_json::Error::io(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "missing formatVersion",
-                )))
-            })? as u32;
-        if found != RIMR_FORMAT_VERSION {
-            return Err(LibraryError::UnsupportedFormatVersion {
-                file,
-                expected: RIMR_FORMAT_VERSION,
-                found,
-            });
+        let mut value: Value = serde_json::from_slice(&bytes)?;
+        let outcome = migrate_document(kind, &mut value)?;
+        if outcome.changed() {
+            tracing::info!(
+                path = ?path,
+                from = outcome.from_version,
+                to = outcome.to_version,
+                "migrated library document"
+            );
         }
         serde_json::from_value(value).map_err(LibraryError::from)
     }
@@ -96,7 +89,7 @@ impl LibraryStore for JsonLibraryStore {
             self.write_json(&path, &settings).await?;
             return Ok(settings);
         }
-        self.read_json(&path, "settings.json").await
+        self.read_json(&path, DocumentKind::LibrarySettings).await
     }
 
     async fn save_settings(&self, settings: &LibrarySettings) -> Result<(), LibraryError> {
@@ -124,7 +117,7 @@ impl LibraryStore for JsonLibraryStore {
             self.write_json(&path, &index).await?;
             return Ok(index);
         }
-        self.read_json(&path, "mod-lists/index.json").await
+        self.read_json(&path, DocumentKind::ModListIndex).await
     }
 
     async fn save_mod_list_index(&self, index: &ModListIndex) -> Result<(), LibraryError> {
@@ -141,7 +134,7 @@ impl LibraryStore for JsonLibraryStore {
     async fn read_mod_list(&self, id: &str) -> Result<ModList, LibraryError> {
         let path = self.mod_list_path(id)?;
         tracing::debug!(mod_list_id = %id, path = ?path, "reading mod list");
-        self.read_json(&path, "mod-lists/<id>.json").await
+        self.read_json(&path, DocumentKind::ModList).await
     }
 
     async fn write_mod_list(&self, mod_list: &ModList) -> Result<(), LibraryError> {
@@ -241,7 +234,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn store_rejects_unsupported_format_versions() {
+    async fn store_rejects_documents_without_a_migration_path() {
         let dir = tempfile::tempdir().unwrap();
         let store = JsonLibraryStore::new(dir.path().join("RimR"));
         std::fs::create_dir_all(dir.path().join("RimR")).unwrap();
@@ -252,13 +245,6 @@ mod tests {
         .unwrap();
 
         let error = store.load_settings().await.unwrap_err();
-        assert!(matches!(
-            error,
-            LibraryError::UnsupportedFormatVersion {
-                file: "settings.json",
-                expected: 2,
-                found: 1
-            }
-        ));
+        assert!(matches!(error, LibraryError::Migration(_)), "{error:?}");
     }
 }

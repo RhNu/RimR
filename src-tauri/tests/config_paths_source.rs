@@ -100,7 +100,7 @@ fn legacy_flat_config_is_reinterpreted_with_default_sections() {
 
     let loaded = load_config_from_file(&path).unwrap();
 
-    assert_eq!(loaded.format_version, 2);
+    assert_eq!(loaded.format_version, 4);
     assert!(loaded.paths.game_dir.is_none());
     assert!(loaded.paths.rimr_data_dir.is_some());
     assert_eq!(loaded.ui.theme, None);

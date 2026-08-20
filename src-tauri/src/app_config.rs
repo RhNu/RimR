@@ -1,5 +1,6 @@
 pub use rimr_bindings::app_config::*;
 
+use rimr_core::migrations::{DocumentKind, migrate_document};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -22,6 +23,12 @@ pub enum ConfigFileError {
     },
     #[error("failed to serialize config: {0}")]
     Serialize(serde_json::Error),
+
+    #[error("failed to migrate config {path}: {source}")]
+    Migrate {
+        path: PathBuf,
+        source: rimr_core::migrations::MigrationError,
+    },
 }
 
 pub fn load_config_from_file(path: &Path) -> Result<AppConfig, ConfigFileError> {
@@ -35,61 +42,23 @@ pub fn load_config_from_file(path: &Path) -> Result<AppConfig, ConfigFileError> 
         source,
     })?;
 
-    let bytes = migrate_config_bytes(path, bytes)?;
-
-    serde_json::from_slice(&bytes).map_err(|source| ConfigFileError::Parse {
-        path: path.to_path_buf(),
-        source,
-    })
-}
-
-fn migrate_config_bytes(path: &Path, bytes: Vec<u8>) -> Result<Vec<u8>, ConfigFileError> {
     let mut value: serde_json::Value =
         serde_json::from_slice(&bytes).map_err(|source| ConfigFileError::Parse {
             path: path.to_path_buf(),
             source,
         })?;
 
-    let needs_migration = value
-        .get("formatVersion")
-        .and_then(|v| v.as_u64())
-        .is_some_and(|v| v < 4);
+    migrate_document(DocumentKind::AppConfig, &mut value).map_err(|source| {
+        ConfigFileError::Migrate {
+            path: path.to_path_buf(),
+            source,
+        }
+    })?;
 
-    if !needs_migration {
-        return Ok(bytes);
-    }
-
-    let Some(paths) = value.get_mut("paths") else {
-        return Ok(bytes);
-    };
-    let Some(paths_obj) = paths.as_object_mut() else {
-        return Ok(bytes);
-    };
-
-    if paths_obj.contains_key("gameDataDir") {
-        return serde_json::to_vec(&value).map_err(ConfigFileError::Serialize);
-    }
-
-    if let Some(config_dir) = paths_obj.get("configDir").and_then(|v| v.as_str())
-        && let Some(parent) = std::path::Path::new(config_dir).parent()
-    {
-        let parent_str = parent.to_string_lossy().into_owned();
-        tracing::info!(
-            config_dir = config_dir,
-            game_data_dir = %parent_str,
-            "migrating configDir to gameDataDir (v3 → v4)"
-        );
-        paths_obj.insert(
-            "gameDataDir".to_string(),
-            serde_json::Value::String(parent_str),
-        );
-    }
-
-    if let Some(obj) = value.as_object_mut() {
-        obj.insert("formatVersion".to_string(), serde_json::json!(4));
-    }
-
-    serde_json::to_vec(&value).map_err(ConfigFileError::Serialize)
+    serde_json::from_value(value).map_err(|source| ConfigFileError::Parse {
+        path: path.to_path_buf(),
+        source,
+    })
 }
 
 pub fn save_config_to_file(path: &Path, config: &AppConfig) -> Result<(), ConfigFileError> {

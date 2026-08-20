@@ -11,6 +11,7 @@ mod diagnostics;
 mod domain;
 mod error;
 mod formats;
+pub mod migrations;
 mod ports;
 mod rules;
 mod services;

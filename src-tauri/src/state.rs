@@ -1307,6 +1307,10 @@ fn command_config_write_error(error: ConfigFileError) -> CommandError {
         ConfigFileError::Serialize(error) => {
             CommandError::new(CommandErrorCode::ConfigWriteFailed, error.to_string())
         }
+        ConfigFileError::Migrate { path, source } => {
+            CommandError::new(CommandErrorCode::ConfigReadFailed, source.to_string())
+                .with_path(path)
+        }
     }
 }
 

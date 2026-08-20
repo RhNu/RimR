@@ -60,5 +60,6 @@ pub fn library_error(error: LibraryError) -> CommandError {
             CommandErrorCode::Json,
             format!("unsupported {file} format version: expected {expected}, found {found}"),
         ),
+        LibraryError::Migration(e) => CommandError::new(CommandErrorCode::Json, e.to_string()),
     }
 }

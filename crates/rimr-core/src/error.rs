@@ -89,4 +89,7 @@ pub enum LibraryError {
         expected: u32,
         found: u32,
     },
+
+    #[error("library format migration failed: {0}")]
+    Migration(#[from] crate::migrations::MigrationError),
 }

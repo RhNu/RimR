@@ -120,7 +120,7 @@
   "diagnostics": {
     "xmlMalformed": "About.xml could not be parsed: {{error}}",
     "packageIdMissing": "About.xml is missing packageId.",
-    "packageIdDuplicate": "Duplicate package ID {{packageId}}: {{paths}}",
+    "packageIdDuplicate": "Duplicate package ID {{packageId}}: loading {{usedPath}}, ignoring {{shadowedPaths}}",
     "sourceReadFailed": "About.xml could not be read for {{sourceKey}}.",
     "dependencyMissing": "{{packageId}} is missing dependency {{dependencyPackageId}}.",
     "configModMissing": "ModsConfig.xml references {{packageId}}, but it is not installed.",

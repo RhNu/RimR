@@ -16,10 +16,26 @@ pub enum CatalogInsertResult {
 }
 
 /// A packageId installed more than once, with every source it was found at.
+///
+/// `source_keys` is in discovery order, so the first element is always the
+/// copy the catalog treats as primary — the one the game will actually load.
+/// The rest are shadowed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DuplicatePackageId {
     pub package_id: PackageId,
     pub source_keys: Vec<ModSourceKey>,
+}
+
+impl DuplicatePackageId {
+    /// The copy that wins: the first one discovered.
+    pub fn effective_source_key(&self) -> &ModSourceKey {
+        &self.source_keys[0]
+    }
+
+    /// The copies that lose to [`Self::effective_source_key`].
+    pub fn shadowed_source_keys(&self) -> &[ModSourceKey] {
+        &self.source_keys[1..]
+    }
 }
 
 /// All installed mods indexed by PackageId.

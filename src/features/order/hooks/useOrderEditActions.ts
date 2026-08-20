@@ -13,14 +13,13 @@ import {
 } from '@/features/order/hooks/useAliasDialogActions';
 import {
   canCreateActiveGroup,
-  canCreateInactiveGroup,
-  catalogItemKey,
   createGroupId,
-  isPackageAddressableMod,
+  removalTargets,
   submitOrderDialog,
   type GameSyncResult,
   type ModListAction,
 } from '@/features/order/model';
+import { useCreateGroupFromInactive } from '@/features/order/hooks/useCreateGroupFromInactive';
 import { entryIndex } from '@/features/order/dndIds';
 import type { OrderDialog } from '@/features/order/types';
 import { useOrderDialogStore } from '@/stores/orderDialogStore';
@@ -63,12 +62,20 @@ export function useOrderEditActions({
 }: UseOrderEditActionsParams) {
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  const handleCreateGroupFromInactive = useCreateGroupFromInactive({
+    draftRef,
+    selectedInactivePackageIds,
+    sortedInactiveMods,
+    applyDraft,
+    resetSelections,
+  });
   const openActions = useDialogOpenActions({
     draftRef,
     setDialog,
     applyDraft,
     modByPackageId,
     aliases,
+    selectedEntryIds,
   });
 
   function handleDialogSubmit(value: string): void {
@@ -100,23 +107,6 @@ export function useOrderEditActions({
     resetSelections();
   }
 
-  function handleCreateGroupFromInactive(nameValue: string): void {
-    const name = nameValue.trim();
-    if (!draftRef.current || !canCreateInactiveGroup(selectedInactivePackageIds) || !name) return;
-    const selectedMods = sortedInactiveMods.filter(
-      (mod) => isPackageAddressableMod(mod) && selectedInactivePackageIds.has(catalogItemKey(mod)),
-    );
-    applyDraft({
-      type: 'createGroupFromMods',
-      mods: selectedMods,
-      groupId: createGroupId(),
-      name,
-      index: draftRef.current.entries.length,
-      active: true,
-    });
-    resetSelections();
-  }
-
   function handleDiscardDraft(): void {
     onDiscardDraft();
     setDialog(null);
@@ -136,12 +126,14 @@ function useDialogOpenActions({
   applyDraft,
   modByPackageId,
   aliases,
+  selectedEntryIds,
 }: {
   draftRef: MutableRefObject<ModListDto | null>;
   setDialog: (dialog: OrderDialog) => void;
   applyDraft: (action: ModListAction) => void;
   modByPackageId: Map<string, ModMetadataDto>;
   aliases: DisplayAliasDto[];
+  selectedEntryIds: Set<string>;
 }) {
   const { t } = useTranslation();
   return {
@@ -152,7 +144,7 @@ function useDialogOpenActions({
       setDialog({ kind: 'createInactiveGroup', value: t('order.groupDefault') });
     }, [setDialog, t]),
     editInactiveAlias: useEditInactiveAlias(aliases, setDialog),
-    removeActiveEntry: useRemoveEntry(draftRef, applyDraft),
+    removeActiveEntry: useRemoveEntry(draftRef, applyDraft, selectedEntryIds),
     handleActiveDoubleClick: useCallback(
       (entry: ModListEntryDto) => {
         if (entry.kind === 'mod') {
@@ -191,21 +183,34 @@ function useDialogOpenActions({
   };
 }
 
+/**
+ * Removes the clicked entry, or the whole selection when the clicked entry is
+ * part of it.
+ *
+ * The context menu opens only after the row has been added to the selection,
+ * so acting on the clicked entry alone silently ignored the other selected
+ * rows — unlike dragging and grouping, which have always been selection-wide.
+ */
 function useRemoveEntry(
   draftRef: MutableRefObject<ModListDto | null>,
   applyDraft: (action: ModListAction) => void,
+  selectedEntryIds: Set<string>,
 ) {
   return useCallback(
     (entryId: string): void => {
-      const entry = draftRef.current?.entries.find((candidate) => candidate.id === entryId);
-      if (!entry) return;
-      if (entry.kind === 'separator') {
-        applyDraft({ type: 'removeEntry', entryId });
-        return;
+      const { removeIds, deactivateIds } = removalTargets(
+        draftRef.current?.entries ?? [],
+        entryId,
+        selectedEntryIds,
+      );
+      if (removeIds.length > 0) {
+        applyDraft({ type: 'removeEntries', entryIds: removeIds });
       }
-      applyDraft({ type: 'setEntryActive', entryId, active: false });
+      if (deactivateIds.length > 0) {
+        applyDraft({ type: 'setEntriesActive', entryIds: deactivateIds, active: false });
+      }
     },
-    [applyDraft, draftRef],
+    [applyDraft, draftRef, selectedEntryIds],
   );
 }
 

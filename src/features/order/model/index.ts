@@ -7,6 +7,7 @@ export * from './entries';
 export * from './ids';
 export * from './normalize';
 export * from './reducer';
+export * from './removalTargets';
 export * from './selectors';
 export * from './smartSearch';
 export * from './syncFromGame';
